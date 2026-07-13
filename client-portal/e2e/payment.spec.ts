@@ -136,8 +136,9 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
     // 1. Accéder à l'application
     await page.goto('/');
 
-    // 2. Aller sur la page d'inscription
-    await page.click('text=Créer un compte');
+    // 2. Aller sur la page d'inscription en passant par l'espace investisseur
+    await page.click('text=Espace Investisseur');
+    await page.click('text=Créez votre dossier KYC ici');
     await expect(page).toHaveURL(/\/register/);
 
     // Remplir le formulaire d'inscription
@@ -164,7 +165,8 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
     await page.click('#registerBtn');
     await expect(page).toHaveURL(/\//); // Doit revenir à la racine (login)
 
-    // 3. Se connecter
+    // 3. Ouvrir à nouveau l'espace investisseur pour se connecter
+    await page.click('text=Espace Investisseur');
     await page.fill('#phoneOrEmail', 'test@baou.ci');
     await page.fill('#password', 'SecurePassword123!');
     await page.click('#loginBtn');
