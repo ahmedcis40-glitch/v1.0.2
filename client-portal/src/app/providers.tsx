@@ -51,7 +51,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(response.accessToken);
       setUser(response.user);
       setLoading(false);
-      router.push('/dashboard');
+      if (response.user.role === 'ADMIN') {
+        router.push('/admin-portal/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error) {
       setLoading(false);
       throw error;

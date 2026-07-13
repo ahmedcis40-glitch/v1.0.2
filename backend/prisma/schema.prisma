@@ -110,6 +110,7 @@ enum Role {
   CLIENT
   ADMIN_KYC
   TRADER
+  ADMIN
 }
 
 enum KYCStatus {
@@ -139,4 +140,13 @@ enum PawaPayTxStatus {
 enum PawaPayTxType {
   DEPOT
   RETRAIT
+}
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  level     String   // 'ERROR', 'WARN', 'INFO'
+  message   String
+  stack     String?
+  context   String?
+  createdAt DateTime @default(now())
 }

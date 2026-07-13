@@ -67,4 +67,17 @@ export const api = {
     create: (data: any, token: string) => requestApi('/orders', 'POST', data, token),
     getMy: (token: string) => requestApi('/orders/my', 'GET', null, token),
   },
+  admin: {
+    getUsers: (token: string) => requestApi('/admin/users', 'GET', null, token),
+    updateKyc: (id: string, kycStatus: string, token: string) => requestApi(`/admin/users/${id}/kyc`, 'PATCH', { kycStatus }, token),
+    getTransactions: (token: string) => requestApi('/admin/transactions', 'GET', null, token),
+    getIncidents: (token: string) => requestApi('/admin/incidents', 'GET', null, token),
+    getReporting: (token: string) => requestApi('/admin/reporting', 'GET', null, token),
+    getOrders: (token: string) => requestApi('/admin/orders', 'GET', null, token),
+    processOrder: (id: string, status: string, priceReal: number | null, token: string) => requestApi(`/admin/orders/${id}/process`, 'PATCH', { status, priceReal }, token),
+  },
+  support: {
+    getLogs: (token: string) => requestApi('/support/logs', 'GET', null, token),
+    createLog: (level: string, message: string, stack?: string, context?: string) => requestApi('/support/logs', 'POST', { level, message, stack, context }),
+  },
 };
