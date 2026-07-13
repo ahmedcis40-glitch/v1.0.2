@@ -147,54 +147,30 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden relative">
       
-      {/* 1. ÉLÉPHANT D'ARRIÈRE-PLAN QUI GRANDIT AU SCROLL (Position Fixed) */}
+      {/* 1. ÉLÉPHANT D'ARRIÈRE-PLAN QUI GRANDIT AU SCROLL (Position Fixed & parfaitement centré) */}
       {activeSection === 'hero' && (
-        <div className="fixed inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden">
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
           <div 
-            className="opacity-[0.035] text-emerald-500 transition-transform duration-100 ease-out"
+            className="absolute opacity-[0.045] transition-transform duration-100 ease-out"
             style={{ 
-              transform: `scale(${scrollScale})`,
+              left: '50%',
+              top: '50%',
+              transform: `translate(-50%, -50%) scale(${scrollScale})`,
               transformOrigin: 'center center'
             }}
           >
-            {/* Grand Éléphant Géométrique Tricolore en filigrane */}
-            <svg viewBox="0 0 200 200" className="w-[600px] h-[600px] md:w-[800px] md:h-[800px]" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <defs>
-                <linearGradient id="elephantBodyGrad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#ff8200" />
-                  <stop offset="50%" stopColor="#ffffff" />
-                  <stop offset="100%" stopColor="#009e60" />
-                </linearGradient>
-              </defs>
-              <path d="M 95 85 C 75 65, 65 95, 85 125 C 95 135, 105 125, 105 105 Z" stroke="url(#elephantBodyGrad)" />
-              <path d="M 100 80 L 170 75 L 190 100 L 180 145 L 160 145 L 155 115 L 125 115 L 120 145 L 100 145 Z" stroke="url(#elephantBodyGrad)" />
-              <path d="M 105 80 C 105 60, 85 60, 80 80 C 75 90, 95 100, 105 95 Z" stroke="url(#elephantBodyGrad)" />
-              <path d="M 80 80 C 65 75, 55 60, 60 45 C 62 40, 68 40, 65 50 C 62 60, 70 70, 80 75" stroke="url(#elephantBodyGrad)" />
+            {/* Grand Éléphant Géométrique Orange en filigrane */}
+            <svg viewBox="0 0 200 200" className="w-[600px] h-[600px] md:w-[800px] md:h-[800px]" fill="none" stroke="#ff8200" strokeWidth="1.5">
+              <path d="M 95 85 C 75 65, 65 95, 85 125 C 95 135, 105 125, 105 105 Z" />
+              <path d="M 100 80 L 170 75 L 190 100 L 180 145 L 160 145 L 155 115 L 125 115 L 120 145 L 100 145 Z" />
+              <path d="M 105 80 C 105 60, 85 60, 80 80 C 75 90, 95 100, 105 95 Z" />
+              <path d="M 80 80 C 65 75, 55 60, 60 45 C 62 40, 68 40, 65 50 C 62 60, 70 70, 80 75" />
               <path d="M 82 88 L 68 95 L 80 92" stroke="#ffffff" />
               <circle cx="90" cy="74" r="2.5" fill="#ff8200" />
             </svg>
           </div>
         </div>
       )}
-
-      {/* 2. GRAPHISME CÔTE D'IVOIRE EN ARRIÈRE-PLAN (Lumières) */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
-        <div className="absolute top-[20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-orange-500/10 blur-[120px]"></div>
-        <div className="absolute bottom-[20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-emerald-500/10 blur-[120px]"></div>
-        
-        {/* Silhouette de la carte Côte d'Ivoire */}
-        <svg className="absolute right-[5%] top-[15%] w-[450px] h-[450px] opacity-[0.08] text-emerald-500 hidden xl:block" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.5">
-          <path d="M30 15 L50 20 L75 12 L85 45 L78 80 L52 92 L20 82 L15 48 Z" strokeDasharray="2,2" />
-          <path d="M30 15 L45 45 L52 92" />
-          <path d="M75 12 L45 45 L20 82" />
-          <path d="M15 48 L45 45 L85 45" />
-          <circle cx="78" cy="80" r="3" fill="#ff8200" className="animate-pulse" />
-          <circle cx="50" cy="65" r="2" fill="#ffffff" />
-          <circle cx="52" cy="48" r="2.5" fill="#009e60" />
-          <circle cx="32" cy="85" r="2" fill="#ff8200" />
-          <circle cx="48" cy="22" r="2" fill="#009e60" />
-        </svg>
-      </div>
 
       {/* Barre de navigation */}
       <nav className="border-b border-slate-900 bg-slate-900/40 backdrop-blur sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
