@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String               @id @default(uuid())
+  email              String               @unique
+  password           String
+  firstName          String
+  lastName           String
+  phone              String               @unique
+  whatsappPhone      String?
+  role               Role                 @default(CLIENT)
+  kycStatus          KYCStatus            @default(EN_ATTENTE_VALIDATION)
+  kycDocuments       String?
+  consentSMS         Boolean              @default(true)
+  consentWhatsApp    Boolean              @default(true)
+  investorProfile    String?              @default("MODERE")
+  investorHorizon    String?              @default("MOYEN_TERME")
+  investorObjective  String?              @default("EPARGNE")
+  sgiPartenaire      String?              @default("Société Générale Capital Securities")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  auditLogs          AuditLog[]
+  CashWallet         CashWallet?
+  DcaPlan            DcaPlan[]
+  Order              Order[]
+  PawaPayTransaction PawaPayTransaction[]
+  SecuritiesWallet   SecuritiesWallet[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  details   String
+  ipAddress String
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model CashWallet {
+  id            String   @id
+  userId        String   @unique
+  balanceTotal  Float    @default(0.0)
+  balanceFrozen Float    @default(0.0)
+  currency      String   @default("XOF")
+  updatedAt     DateTime
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DcaPlan {
+  id        String   @id
+  userId    String
+  symbol    String
+  amount    Float
+  frequency String
+  status    String
+  nextRun   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id                String      @id
+  userId            String
+  type              OrderType
+  codeValeur        String
+  quantityRequested Int
+  priceRequested    Float
+  priceReal         Float?
+  status            OrderStatus @default(EN_ATTENTE)
+  sgiPartenaireId   String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime
+  User              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PawaPayTransaction {
+  idInternal       String          @id
+  idPawaPay        String?         @unique
+  userId           String
+  amount           Float
+  type             PawaPayTxType
+  status           PawaPayTxStatus @default(EN_COURS)
+  webhookSignature String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime
+  User             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SecuritiesWallet {
+  id              String   @id
+  userId          String
+  codeValeur      String
+  quantity        Int      @default(0)
+  averageBuyPrice Float    @default(0.0)
+  updatedAt       DateTime
+  User            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeValeur])
+}
+
+enum Role {
+  CLIENT
+  ADMIN_KYC
+  TRADER
+}
+
+enum KYCStatus {
+  EN_ATTENTE_VALIDATION
+  APPROUVE
+  REJETE
+}
+
+enum OrderStatus {
+  EN_ATTENTE
+  EN_TRAITEMENT
+  EXECUTE
+  ANNULE
+}
+
+enum OrderType {
+  ACHAT
+  VENTE
+}
+
+enum PawaPayTxStatus {
+  EN_COURS
+  SUCCES
+  ECHEC
+}
+
+enum PawaPayTxType {
+  DEPOT
+  RETRAIT
+}
