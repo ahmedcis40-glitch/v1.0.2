@@ -261,14 +261,14 @@ export default function Dashboard() {
           
           {/* Card Solde Cash */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-1.5 w-full bg-gradient-to-r from-orange-500 via-white to-emerald-500"></div>
+            <div className="absolute top-0 right-0 h-1.5 w-full bg-orange-500"></div>
             <div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Solde Cash disponible</span>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-black text-white" id="balanceDisplay">
                   {cashWallet ? cashWallet.balanceTotal.toLocaleString() : '0'}
                 </span>
-                <span className="text-lg font-bold text-emerald-500">{cashWallet?.currency}</span>
+                <span className="text-lg font-bold text-orange-500">{cashWallet?.currency}</span>
               </div>
               {cashWallet && cashWallet.balanceFrozen > 0 && (
                 <span className="text-xs text-orange-400 mt-2 block">
@@ -299,7 +299,7 @@ export default function Dashboard() {
 
           {/* Card Profil & KYC */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-1.5 w-full bg-emerald-500"></div>
+            <div className="absolute top-0 right-0 h-1.5 w-full bg-white"></div>
             <div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Statut Conformité KYC</span>
               <div className="flex items-center gap-2.5 mt-2">
@@ -332,14 +332,14 @@ export default function Dashboard() {
 
           {/* Card Portefeuille Titres */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-1.5 w-full bg-orange-500"></div>
+            <div className="absolute top-0 right-0 h-1.5 w-full bg-emerald-500"></div>
             <div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Portefeuille d'actions</span>
               <div className="flex items-baseline gap-2 mt-1">
                 <span className="text-3xl font-black text-white">
                   {securities.reduce((acc, curr) => acc + (curr.quantity * curr.averageBuyPrice), 0).toLocaleString()}
                 </span>
-                <span className="text-lg font-bold text-slate-400">XOF</span>
+                <span className="text-lg font-bold text-emerald-500">XOF</span>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-emerald-400 mt-2">
                 <TrendingUp className="h-3.5 w-3.5" />
