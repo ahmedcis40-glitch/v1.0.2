@@ -60,6 +60,7 @@ export default function Dashboard() {
   const [securities, setSecurities] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [marketStocks, setMarketStocks] = useState<Stock[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   // Modals
@@ -74,6 +75,13 @@ export default function Dashboard() {
   const [txLoading, setTxLoading] = useState(false);
   const [txError, setTxError] = useState('');
 
+  // Trading Forms
+  const [tradeType, setTradeType] = useState<'ACHAT' | 'VENTE'>('ACHAT');
+  const [tradeQuantity, setTradeQuantity] = useState('1');
+  const [tradeLoading, setTradeLoading] = useState(false);
+  const [tradeError, setTradeError] = useState('');
+  const [tradeSuccess, setTradeSuccess] = useState('');
+
   // Polling
   const [pendingTxId, setPendingTxId] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
@@ -81,6 +89,7 @@ export default function Dashboard() {
 
   // Navigation Filter
   const [activeMarketTab, setActiveMarketTab] = useState<'holdings' | 'market'>('holdings');
+  const [activeHistoryTab, setActiveHistoryTab] = useState<'payments' | 'orders'>('payments');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -102,16 +111,18 @@ export default function Dashboard() {
   const fetchData = async () => {
     if (!token) return;
     try {
-      const [walletData, securitiesData, txData, stocksData] = await Promise.all([
+      const [walletData, securitiesData, txData, stocksData, ordersData] = await Promise.all([
         api.wallets.getCash(token),
         api.wallets.getSecurities(token),
         api.wallets.getTransactions(token),
         api.market.getStocks(),
+        api.orders.getMy(token),
       ]);
       setCashWallet(walletData);
       setSecurities(securitiesData);
       setTransactions(txData);
       setMarketStocks(stocksData);
+      setOrders(ordersData);
     } catch (e) {
       console.error('Erreur de chargement:', e);
     } finally {
@@ -174,7 +185,12 @@ export default function Dashboard() {
 
       setShowDepositModal(false);
       setTxLoading(false);
-      startPolling(res.idInternal);
+
+      if (res.redirectUrl) {
+        window.location.href = res.redirectUrl;
+      } else {
+        startPolling(res.idInternal);
+      }
     } catch (err: any) {
       setTxError(err.message || 'Erreur d\'initiation du dépôt');
       setTxLoading(false);
@@ -200,6 +216,32 @@ export default function Dashboard() {
     } catch (err: any) {
       setTxError(err.message || 'Erreur d\'initiation du retrait');
       setTxLoading(false);
+    }
+  };
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !selectedStock) return;
+    setTradeError('');
+    setTradeSuccess('');
+    setTradeLoading(true);
+    try {
+      await api.orders.create({
+        type: tradeType,
+        codeValeur: selectedStock.code,
+        quantityRequested: parseInt(tradeQuantity),
+        priceRequested: selectedStock.price
+      }, token);
+
+      setTradeSuccess(`Votre ordre de ${tradeType.toLowerCase()} de ${tradeQuantity} actions ${selectedStock.code} a été enregistré et mis en attente de validation par l'administrateur.`);
+      
+      // Refresh user balance, holdings, and orders
+      await fetchData();
+      setTradeQuantity('1');
+    } catch (err: any) {
+      setTradeError(err.message || "Une erreur est survenue lors de la soumission de l'ordre.");
+    } finally {
+      setTradeLoading(false);
     }
   };
 
@@ -440,66 +482,161 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Section Droite : Historique des transactions */}
-          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg">
-            <h3 className="font-extrabold text-white text-md mb-4 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-emerald-400" />
-              <span>Historique des paiements</span>
-            </h3>
-            {transactions.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-xs text-slate-500">Aucune transaction enregistrée.</p>
+          {/* Section Droite : Historique des transactions et des ordres */}
+          <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col justify-between">
+            <div>
+              {/* Header avec Commutateur d'Onglets */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-800 pb-4">
+                <h3 className="font-extrabold text-white text-md flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-emerald-400" />
+                  <span>Historique des Activités</span>
+                </h3>
+                <div className="flex gap-2 bg-slate-950 p-1 rounded-lg border border-slate-850 self-start sm:self-auto">
+                  <button
+                    onClick={() => setActiveHistoryTab('payments')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                      activeHistoryTab === 'payments'
+                        ? 'bg-slate-900 text-white shadow'
+                        : 'text-slate-550 hover:text-white'
+                    }`}
+                  >
+                    Paiements Cash
+                  </button>
+                  <button
+                    onClick={() => setActiveHistoryTab('orders')}
+                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                      activeHistoryTab === 'orders'
+                        ? 'bg-slate-900 text-white shadow'
+                        : 'text-slate-550 hover:text-white'
+                    }`}
+                  >
+                    Ordres d'actions BRVM
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-800/80 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                      <th className="pb-3">Type</th>
-                      <th className="pb-3">Date</th>
-                      <th className="pb-3">Montant</th>
-                      <th className="pb-3 text-right">Statut</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/30">
-                    {transactions.map((tx, i) => (
-                      <tr key={i} className="text-xs">
-                        <td className="py-3.5 font-bold flex items-center gap-2">
-                          {tx.type === 'DEPOT' ? (
-                            <span className="bg-emerald-500/10 text-emerald-400 p-1 rounded"><ArrowUpRight className="h-3 w-3" /></span>
-                          ) : (
-                            <span className="bg-rose-500/10 text-rose-400 p-1 rounded"><ArrowDownLeft className="h-3 w-3" /></span>
-                          )}
-                          <span>{tx.type === 'DEPOT' ? 'Dépôt' : 'Retrait'}</span>
-                        </td>
-                        <td className="py-3.5 text-slate-400">
-                          {new Date(tx.createdAt).toLocaleDateString('fr-FR', {
-                            day: 'numeric',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </td>
-                        <td className="py-3.5 font-extrabold text-white">
-                          {tx.amount.toLocaleString()} XOF
-                        </td>
-                        <td className="py-3.5 text-right">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                            tx.status === 'SUCCES' 
-                              ? 'bg-emerald-500/10 text-emerald-400' 
-                              : tx.status === 'ECHEC' 
-                              ? 'bg-rose-500/10 text-rose-400' 
-                              : 'bg-orange-500/10 text-orange-400 animate-pulse'
-                          }`}>
-                            {tx.status === 'SUCCES' ? 'Confirmé' : tx.status === 'ECHEC' ? 'Échoué' : 'En attente'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+
+              {activeHistoryTab === 'payments' ? (
+                // Table des Transactions (Paiements Cash)
+                transactions.length === 0 ? (
+                  <div className="text-center py-16">
+                    <p className="text-xs text-slate-500">Aucune transaction de paiement enregistrée.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800/80 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                          <th className="pb-3">Type</th>
+                          <th className="pb-3">Date</th>
+                          <th className="pb-3">Montant</th>
+                          <th className="pb-3 text-right">Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/30">
+                        {transactions.map((tx, i) => (
+                          <tr key={i} className="text-xs">
+                            <td className="py-3.5 font-bold flex items-center gap-2">
+                              {tx.type === 'DEPOT' ? (
+                                <span className="bg-emerald-500/10 text-emerald-400 p-1 rounded"><ArrowUpRight className="h-3 w-3" /></span>
+                              ) : (
+                                <span className="bg-rose-500/10 text-rose-400 p-1 rounded"><ArrowDownLeft className="h-3 w-3" /></span>
+                              )}
+                              <span>{tx.type === 'DEPOT' ? 'Dépôt' : 'Retrait'}</span>
+                            </td>
+                            <td className="py-3.5 text-slate-400">
+                              {new Date(tx.createdAt).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td className="py-3.5 font-extrabold text-white">
+                              {tx.amount.toLocaleString()} XOF
+                            </td>
+                            <td className="py-3.5 text-right">
+                              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                                tx.status === 'SUCCES' 
+                                  ? 'bg-emerald-500/10 text-emerald-400' 
+                                  : tx.status === 'ECHEC' 
+                                  ? 'bg-rose-500/10 text-rose-400' 
+                                  : 'bg-orange-500/10 text-orange-400 animate-pulse'
+                              }`}>
+                                {tx.status === 'SUCCES' ? 'Confirmé' : tx.status === 'ECHEC' ? 'Échoué' : 'En attente'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              ) : (
+                // Table des Ordres d'actions BRVM
+                orders.length === 0 ? (
+                  <div className="text-center py-16">
+                    <p className="text-xs text-slate-500">Aucun ordre boursier d'actions enregistré.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800/80 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                          <th className="pb-3">Ordre</th>
+                          <th className="pb-3">Titre</th>
+                          <th className="pb-3">Détails</th>
+                          <th className="pb-3">Total</th>
+                          <th className="pb-3 text-right">Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/30">
+                        {orders.map((ord, i) => {
+                          const isAchat = ord.type === 'ACHAT';
+                          const totalVal = ord.quantityRequested * ord.priceRequested;
+                          return (
+                            <tr key={i} className="text-xs">
+                              <td className="py-3.5 font-bold flex items-center gap-2">
+                                {isAchat ? (
+                                  <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded text-[10px]">Achat</span>
+                                ) : (
+                                  <span className="bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded text-[10px]">Vente</span>
+                                )}
+                              </td>
+                              <td className="py-3.5">
+                                <span className="bg-slate-950 text-white border border-slate-850 px-1.5 py-0.5 rounded font-mono font-bold">
+                                  {ord.codeValeur}
+                                </span>
+                              </td>
+                              <td className="py-3.5 text-slate-450 font-mono">
+                                {ord.quantityRequested} x {ord.priceRequested.toLocaleString()} F
+                              </td>
+                              <td className="py-3.5 font-extrabold text-white">
+                                {totalVal.toLocaleString()} XOF
+                              </td>
+                              <td className="py-3.5 text-right">
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                                  ord.status === 'EXECUTE'
+                                    ? 'bg-emerald-500/10 text-emerald-400'
+                                    : ord.status === 'ANNULE'
+                                    ? 'bg-rose-500/10 text-rose-400'
+                                    : 'bg-orange-500/10 text-orange-400 animate-pulse'
+                                }`}>
+                                  {ord.status === 'EXECUTE'
+                                    ? 'Exécuté'
+                                    : ord.status === 'ANNULE'
+                                    ? 'Annulé'
+                                    : 'En attente admin'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              )}
+            </div>
           </div>
         </div>
       </main>
@@ -722,11 +859,170 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 mt-6 flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Ce titre est négociable sur la BRVM. Contactez votre trader pour exécuter un ordre d'achat ou de vente.
-              </p>
+            {/* Panneau de Négociation d'Actions BRVM */}
+            <div className="mt-6 border-t border-slate-800 pt-6 space-y-4">
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">Passer un Ordre Boursier</h4>
+
+              {/* Onglets Achat / Vente */}
+              <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-850">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTradeType('ACHAT');
+                    setTradeError('');
+                    setTradeSuccess('');
+                  }}
+                  className={`py-2 rounded-lg text-xs font-black transition-colors cursor-pointer ${
+                    tradeType === 'ACHAT'
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  ACHETER
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTradeType('VENTE');
+                    setTradeError('');
+                    setTradeSuccess('');
+                  }}
+                  className={`py-2 rounded-lg text-xs font-black transition-colors cursor-pointer ${
+                    tradeType === 'VENTE'
+                      ? 'bg-rose-500 text-slate-950'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  VENDRE
+                </button>
+              </div>
+
+              {/* Alertes de statut KYC ou validation */}
+              {user.kycStatus !== 'APPROUVE' ? (
+                <div className="p-3.5 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs rounded-xl">
+                  ⚠️ <strong>Dossier non validé</strong> : Votre compte n'est pas encore approuvé par le service KYC. Vous ne pouvez pas encore négocier de titres.
+                </div>
+              ) : (
+                <form onSubmit={handlePlaceOrder} className="space-y-4">
+                  {tradeError && (
+                    <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-xl">
+                      {tradeError}
+                    </div>
+                  )}
+
+                  {tradeSuccess && (
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-xl">
+                      {tradeSuccess}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Quantité de titres
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={tradeQuantity}
+                      onChange={(e) => {
+                        setTradeQuantity(e.target.value);
+                        setTradeError('');
+                        setTradeSuccess('');
+                      }}
+                      className="w-full bg-slate-950 border border-slate-850 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-sm font-mono"
+                    />
+                  </div>
+
+                  {/* Synthèse financière de l'ordre */}
+                  {(() => {
+                    const qty = parseInt(tradeQuantity) || 0;
+                    const price = selectedStock.price;
+                    const rawCost = qty * price;
+                    const commission = rawCost * 0.015;
+                    const totalCost = rawCost + commission;
+                    const dispo = cashWallet ? cashWallet.balanceTotal - cashWallet.balanceFrozen : 0;
+                    const ownedSec = securities.find((s) => s.codeValeur === selectedStock.code);
+                    const ownedQty = ownedSec ? ownedSec.quantity : 0;
+                    const isAchat = tradeType === 'ACHAT';
+
+                    const hasFunds = dispo >= totalCost;
+                    const hasStocks = ownedQty >= qty;
+
+                    return (
+                      <div className="bg-slate-950 border border-slate-850 rounded-xl p-4 space-y-2 text-xs">
+                        <div className="flex justify-between text-slate-400">
+                          <span>Valeur brute :</span>
+                          <span className="font-mono text-white">{rawCost.toLocaleString()} XOF</span>
+                        </div>
+                        <div className="flex justify-between text-slate-400">
+                          <span>Frais SGI (1.5%) :</span>
+                          <span className="font-mono text-white">{commission.toLocaleString()} XOF</span>
+                        </div>
+                        <div className="flex justify-between font-bold border-t border-slate-850 pt-2 text-slate-300">
+                          <span>{isAchat ? 'Débit estimé :' : 'Gain estimé :'}</span>
+                          <span className={`font-mono ${isAchat ? 'text-orange-400' : 'text-emerald-400'}`}>
+                            {totalCost.toLocaleString()} XOF
+                          </span>
+                        </div>
+
+                        {/* Validations visuelles et blocages */}
+                        <div className="border-t border-slate-850 pt-2 space-y-1">
+                          {isAchat ? (
+                            <div className="flex justify-between items-center text-[10px]">
+                              <span className="text-slate-500">Solde Cash dispo :</span>
+                              <span className={`font-mono font-bold ${hasFunds ? 'text-emerald-400' : 'text-rose-500'}`}>
+                                {dispo.toLocaleString()} XOF
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between items-center text-[10px]">
+                              <span className="text-slate-500">Actions possédées :</span>
+                              <span className={`font-mono font-bold ${hasStocks ? 'text-emerald-400' : 'text-rose-500'}`}>
+                                {ownedQty} titres
+                              </span>
+                            </div>
+                          )}
+
+                          {isAchat && !hasFunds && (
+                            <div className="text-[10px] text-rose-500 font-bold block pt-1">
+                              ❌ Solde cash disponible insuffisant pour couvrir cet achat.
+                            </div>
+                          )}
+
+                          {!isAchat && !hasStocks && (
+                            <div className="text-[10px] text-rose-500 font-bold block pt-1">
+                              ❌ Vous ne possédez pas assez d'actions de ce titre.
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={
+                            tradeLoading ||
+                            (isAchat && !hasFunds) ||
+                            (!isAchat && !hasStocks) ||
+                            qty <= 0
+                          }
+                          className={`w-full py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 mt-2 cursor-pointer ${
+                            isAchat
+                              ? 'bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:bg-emerald-500/25 disabled:text-emerald-500/50 text-slate-950'
+                              : 'bg-rose-500 hover:bg-rose-600 active:bg-rose-700 disabled:bg-rose-500/25 disabled:text-rose-500/50 text-slate-950'
+                          }`}
+                        >
+                          {tradeLoading ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-slate-950"></div>
+                          ) : isAchat ? (
+                            'Soumettre l\'ordre d\'achat'
+                          ) : (
+                            'Soumettre l\'ordre de vente'
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </form>
+              )}
             </div>
           </div>
         </div>

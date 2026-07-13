@@ -9,7 +9,7 @@ import { PawaPayTxStatus, PawaPayTxType } from '@prisma/client';
 export class PawaPayService {
   private readonly logger = new Logger(PawaPayService.name);
   private readonly apiUrl = process.env.PAWAPAY_API_URL || 'https://api.sandbox.pawapay.cloud';
-  private readonly token = process.env.PAWAPAY_API_TOKEN;
+  private readonly token = process.env.PAWAPAY_API_TOKEN || process.env.PAWAPAY_API_KEY;
 
   constructor(private prisma: PrismaService) {}
 
@@ -29,20 +29,39 @@ export class PawaPayService {
       },
     });
 
-    // 2. Préparer le payload pour PawaPay C2B
-    const payload = {
-      depositId: idInternal,
-      amount: amount.toString(),
-      currency: 'XOF',
-      correspondent,
-      payer: {
-        address: {
-          value: phone,
+    const isV2 = this.apiUrl.includes('/v2');
+    let payload: any;
+    let endpoint = `${this.apiUrl}/deposits`;
+
+    if (isV2) {
+      endpoint = `${this.apiUrl}/paymentpage`;
+      payload = {
+        depositId: idInternal,
+        returnUrl: `${process.env.CLIENT_APP_URL || 'http://localhost:8080'}/dashboard`,
+        amountDetails: {
+          amount: amount.toString(),
+          currency: 'XOF',
         },
-      },
-      customerTimestamp: new Date().toISOString(),
-      statementDescription: 'Baou Finance Depot',
-    };
+        phoneNumber: phone.replace('+', ''),
+        language: 'FR',
+        country: 'CIV',
+        reason: 'Dépôt BAOU Finance',
+      };
+    } else {
+      payload = {
+        depositId: idInternal,
+        amount: amount.toString(),
+        currency: 'XOF',
+        correspondent,
+        payer: {
+          address: {
+            value: phone,
+          },
+        },
+        customerTimestamp: new Date().toISOString(),
+        statementDescription: 'Baou Finance Depot',
+      };
+    }
 
     try {
       this.logger.log(`Initiation dépôt PawaPay pour l'utilisateur ${userId}, montant ${amount}`);
@@ -53,9 +72,10 @@ export class PawaPayService {
         responseData = {
           depositId: idInternal,
           status: 'ACCEPTED',
+          redirectUrl: `https://sandbox.pawapay.io/payment/redirect/${idInternal}`
         };
       } else {
-        const response = await axios.post(`${this.apiUrl}/deposits`, payload, {
+        const response = await axios.post(endpoint, payload, {
           headers: {
             'Authorization': `Bearer ${this.token}`,
             'Content-Type': 'application/json',
@@ -86,6 +106,7 @@ export class PawaPayService {
         idInternal,
         idPawaPay: responseData.depositId || idInternal,
         status: 'PENDING',
+        redirectUrl: responseData.redirectUrl || null,
       };
     } catch (error: any) {
       this.logger.error(`Erreur initiation dépôt PawaPay: ${error.message}`, error.stack);
