@@ -38,13 +38,19 @@ Prisma Studio démarre sur le port **5555** : `http://localhost:5555`.
 
 ---
 
-## 🔑 Identifiants & Accès de Test (Back-office)
+## 🔑 Identifiants & Accès de Test (Console & Support)
 
-Pour tester les fonctionnalités d'administration, de gestion KYC, de validation d'ordres BRVM et d'analyse d'erreurs de support, connectez-vous avec les identifiants d'administration suivants :
+Pour tester les différentes consoles sécurisées, connectez-vous avec les identifiants de test suivants :
 
-*   **URL de connexion Admin** : [http://localhost:8080/admin-portal/login](http://localhost:8080/admin-portal/login)
+### 1. Administrateur Principal (Accès Total)
+*   **URL de connexion** : [http://localhost:8080/admin-portal/login](http://localhost:8080/admin-portal/login)
 *   **Adresse E-mail** : `admin@baou.ci`
 *   **Mot de passe** : `adminBaou2026!`
+
+### 2. Technicien Support (Accès Logs & Bugs uniquement)
+*   **URL de connexion** : [http://localhost:8080/admin-portal/login](http://localhost:8080/admin-portal/login)
+*   **Adresse E-mail** : `support@baou.ci`
+*   **Mot de passe** : `supportBaou2026!`
 
 ---
 

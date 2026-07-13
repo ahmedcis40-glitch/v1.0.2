@@ -20,6 +20,8 @@ export default function AdminLoginPage() {
     if (user) {
       if (user.role === 'ADMIN') {
         router.push('/admin-portal/dashboard');
+      } else if (user.role === 'SUPPORT') {
+        router.push('/support-portal');
       } else {
         router.push('/dashboard');
       }

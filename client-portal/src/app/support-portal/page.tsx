@@ -30,7 +30,7 @@ function SupportPortalContent() {
 
   useEffect(() => {
     if (!loading) {
-      if (!user || user.role !== 'ADMIN') {
+      if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPPORT')) {
         router.push('/admin-portal/login');
       } else {
         fetchLogs();

@@ -53,6 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       if (response.user.role === 'ADMIN') {
         router.push('/admin-portal/dashboard');
+      } else if (response.user.role === 'SUPPORT') {
+        router.push('/support-portal');
       } else {
         router.push('/dashboard');
       }

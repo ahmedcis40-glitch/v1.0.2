@@ -11,7 +11,7 @@ export class SupportController {
 
   @Get('logs')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.SUPPORT)
   async getLogs() {
     return this.supportService.getLogs();
   }
