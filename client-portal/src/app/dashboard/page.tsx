@@ -18,7 +18,8 @@ import {
   RefreshCw,
   Phone,
   Maximize2,
-  X
+  X,
+  Globe
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import Logo from '@/components/Logo';
