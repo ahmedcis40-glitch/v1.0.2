@@ -43,9 +43,28 @@ export const api = {
   pawapay: {
     initiateDeposit: (data: any, token: string) => requestApi('/pawapay/deposit', 'POST', data, token),
     initiateWithdraw: (data: any, token: string) => requestApi('/pawapay/withdraw', 'POST', data, token),
+    simulateCallback: (id: string, status: 'COMPLETED' | 'FAILED', isWithdrawal = false) => {
+      return fetch(`${API_BASE}/pawapay/callback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-pawapay-signature': 'VALIDATED_SIMULATED'
+        },
+        body: JSON.stringify({
+          depositId: isWithdrawal ? undefined : id,
+          payoutId: isWithdrawal ? id : undefined,
+          status,
+          failureCode: status === 'FAILED' ? 'USER_CANCELLED' : undefined
+        })
+      });
+    }
   },
   market: {
     getStocks: () => requestApi('/market/stocks', 'GET'),
     getSgis: () => requestApi('/market/sgis', 'GET'),
+  },
+  orders: {
+    create: (data: any, token: string) => requestApi('/orders', 'POST', data, token),
+    getMy: (token: string) => requestApi('/orders/my', 'GET', null, token),
   },
 };

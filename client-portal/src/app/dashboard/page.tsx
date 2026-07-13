@@ -112,11 +112,21 @@ function DashboardContent() {
   useEffect(() => {
     const result = searchParams.get('paymentResult');
     const depositAmount = searchParams.get('amount');
+    const type = searchParams.get('type') || 'DEPOT';
+    const isWithdraw = type === 'RETRAIT';
     if (result) {
       if (result === 'success') {
-        alert(`Dépôt réussi ! Votre solde cash a été crédité de ${parseFloat(depositAmount || '0').toLocaleString()} XOF.`);
+        if (isWithdraw) {
+          alert(`Retrait réussi ! Votre Mobile Money a été crédité de ${parseFloat(depositAmount || '0').toLocaleString()} XOF.`);
+        } else {
+          alert(`Dépôt réussi ! Votre solde cash a été crédité de ${parseFloat(depositAmount || '0').toLocaleString()} XOF.`);
+        }
       } else if (result === 'failure') {
-        alert("Le dépôt a échoué ou a été annulé par l'utilisateur.");
+        if (isWithdraw) {
+          alert("Le retrait a échoué ou a été annulé.");
+        } else {
+          alert("Le dépôt a échoué ou a été annulé par l'utilisateur.");
+        }
       }
       router.replace('/dashboard');
       fetchData();
@@ -227,7 +237,12 @@ function DashboardContent() {
 
       setShowWithdrawModal(false);
       setTxLoading(false);
-      startPolling(res.idInternal);
+      
+      if (res.redirectUrl) {
+        window.location.href = res.redirectUrl;
+      } else {
+        startPolling(res.idInternal);
+      }
     } catch (err: any) {
       setTxError(err.message || 'Erreur d\'initiation du retrait');
       setTxLoading(false);

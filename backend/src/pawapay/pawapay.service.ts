@@ -69,10 +69,11 @@ export class PawaPayService {
       let responseData;
       if (!this.token || this.token.includes('placeholder')) {
         this.logger.warn('Token PawaPay non configuré ou placeholder. Simulation du succès de l\'appel API.');
+        const clientAppUrl = process.env.CLIENT_APP_URL || 'http://localhost:8080';
         responseData = {
           depositId: idInternal,
           status: 'ACCEPTED',
-          redirectUrl: `https://sandbox.pawapay.io/payment/redirect/${idInternal}`
+          redirectUrl: `${clientAppUrl}/payment-simulation?depositId=${idInternal}&amount=${amount}&phone=${phone}`
         };
       } else {
         const response = await axios.post(endpoint, payload, {
@@ -186,9 +187,11 @@ export class PawaPayService {
       let responseData;
       if (!this.token || this.token.includes('placeholder')) {
         this.logger.warn('Token PawaPay non configuré ou placeholder. Simulation du succès de l\'appel API.');
+        const clientAppUrl = process.env.CLIENT_APP_URL || 'http://localhost:8080';
         responseData = {
           payoutId: idInternal,
           status: 'ACCEPTED',
+          redirectUrl: `${clientAppUrl}/payment-simulation?payoutId=${idInternal}&amount=${amount}&phone=${phone}&type=RETRAIT`
         };
       } else {
         const response = await axios.post(`${this.apiUrl}/payouts`, payload, {
@@ -221,6 +224,7 @@ export class PawaPayService {
         idInternal,
         idPawaPay: responseData.payoutId || idInternal,
         status: 'PENDING',
+        redirectUrl: responseData.redirectUrl || null,
       };
     } catch (error: any) {
       this.logger.error(`Erreur initiation retrait PawaPay: ${error.message}`);
