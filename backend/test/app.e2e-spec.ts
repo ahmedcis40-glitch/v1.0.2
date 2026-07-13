@@ -162,6 +162,16 @@ describe('Fintech Backend (e2e)', () => {
       expect(res.body.balanceTotal).toBe(15000.0);
     });
 
+    it('should retrieve user profile (me)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Authorization', `Bearer ${jwtToken}`)
+        .expect(200);
+
+      expect(res.body.email).toBe('test@baou.ci');
+      expect(res.body.firstName).toBe('Jean');
+    });
+
     it('should initiate a deposit', async () => {
       const depositData = {
         amount: 5000,
