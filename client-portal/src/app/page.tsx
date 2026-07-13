@@ -21,7 +21,8 @@ import {
   UserCheck,
   Building,
   CheckCircle,
-  HelpCircle
+  HelpCircle,
+  Coins
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -543,75 +544,132 @@ export default function Home() {
         )}
 
         {activeSection === 'login' && (
-          <div className="max-w-md w-full mx-auto py-8">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-              {/* Bannière de liseré tricolore en haut */}
-              <div className="absolute top-0 right-0 h-1.5 w-full bg-gradient-to-r from-orange-500 via-white to-emerald-500"></div>
-
-              <div className="mb-6 space-y-1">
-                <h3 className="text-2xl font-black text-white">Espace Investisseur</h3>
-                <p className="text-xs text-slate-400">Connectez-vous pour acheter et vendre vos actions BRVM.</p>
+          <div className="max-w-4xl w-full mx-auto py-8 flex flex-col md:flex-row gap-8 items-stretch">
+            
+            {/* Colonne Gauche : Garanties et Présentation de l'espace */}
+            <div className="flex-1 bg-slate-900/40 border border-slate-800 rounded-3xl p-8 flex flex-col justify-between space-y-6">
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-full text-[10px] font-bold text-orange-400 uppercase tracking-wider">
+                  Sécurité Agréée
+                </div>
+                <h3 className="text-2xl font-black text-white leading-snug">
+                  Accédez à votre Espace Privé Investisseur
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Votre espace vous permet d'acheter et de vendre les actions cotées de la BRVM, de suivre vos dividendes en temps réel, de configurer vos plans de dépôt automatique et d'éditer votre profil KYC.
+                </p>
               </div>
 
-              {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-lg mb-4">
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Adresse Email</label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      id="phoneOrEmail"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Ex: jean@koffi.ci"
-                      required
-                      className="w-full bg-slate-950 border border-slate-850 rounded-xl pl-4 pr-10 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500 text-sm transition-colors"
-                    />
-                    <Mail className="absolute right-3.5 top-3.5 h-4.5 w-4.5 text-slate-600" />
+              {/* Liste d'avantages avec icônes */}
+              <div className="space-y-4 pt-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                    <ShieldCheck className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-xs">Connexion Chiffrée</h4>
+                    <p className="text-[10px] text-slate-500">Chiffrement AES-256 bits et audit de conformité régulier.</p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Mot de passe</label>
-                  <div className="relative">
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      className="w-full bg-slate-950 border border-slate-850 rounded-xl pl-4 pr-10 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500 text-sm transition-colors"
-                    />
-                    <Lock className="absolute right-3.5 top-3.5 h-4.5 w-4.5 text-slate-600" />
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400 shrink-0">
+                    <Building className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-xs">Exécution Via SGI Agréée</h4>
+                    <p className="text-[10px] text-slate-500">Vos fonds transitent par des comptes séquestres régulés.</p>
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  id="loginBtn"
-                  disabled={loginLoading}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:bg-emerald-500/50 text-slate-950 font-black py-3.5 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2 cursor-pointer text-sm mt-6"
-                >
-                  {loginLoading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-slate-950"></div>
-                  ) : (
-                    <>
-                      <span>Se connecter</span>
-                      <UserCheck className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-              </form>
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center text-white shrink-0">
+                    <Coins className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-xs">4 Opérateurs Mobile Money</h4>
+                    <p className="text-[10px] text-slate-500">Orange Money, MTN Money, Moov Money et Wave Côte d'Ivoire.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-[10px] text-slate-500 border-t border-slate-800/60 pt-4 flex justify-between">
+                <span>Régulateur : AMF-UMOA</span>
+                <span>Baou Fintech CI</span>
+              </div>
+            </div>
+
+            {/* Colonne Droite : Formulaire de connexion proprement dit */}
+            <div className="w-full md:w-[380px] bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+              {/* Bannière de liseré tricolore en haut */}
+              <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-orange-500 via-white to-emerald-500"></div>
+
+              <div>
+                <div className="mb-6 space-y-1">
+                  <h4 className="text-xl font-black text-white">Connexion Directe</h4>
+                  <p className="text-[10px] text-slate-400">Saisissez vos identifiants sécurisés.</p>
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-lg mb-4">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2">Adresse Email</label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        id="phoneOrEmail"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Ex: jean@koffi.ci"
+                        required
+                        className="w-full bg-slate-950 border border-slate-850 rounded-xl pl-4 pr-10 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500 text-xs transition-colors"
+                      />
+                      <Mail className="absolute right-3.5 top-3.5 h-4 w-4 text-slate-600" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2">Mot de passe</label>
+                    <div className="relative">
+                      <input
+                        type="password"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="w-full bg-slate-950 border border-slate-850 rounded-xl pl-4 pr-10 py-3 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500 text-xs transition-colors"
+                      />
+                      <Lock className="absolute right-3.5 top-3.5 h-4 w-4 text-slate-600" />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    id="loginBtn"
+                    disabled={loginLoading}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:bg-emerald-500/50 text-slate-950 font-black py-3 rounded-xl transition-all shadow-lg flex justify-center items-center gap-2 cursor-pointer text-xs mt-6"
+                  >
+                    {loginLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-slate-950"></div>
+                    ) : (
+                      <>
+                        <span>Se connecter</span>
+                        <UserCheck className="h-4.5 w-4.5" />
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
 
               <div className="mt-8 pt-6 border-t border-slate-800/60 text-center text-xs text-slate-400">
                 Pas encore de compte ?{' '}
-                <Link href="/register" className="text-orange-400 hover:text-orange-300 font-extrabold transition-colors">
+                <Link href="/register" className="text-orange-400 hover:text-orange-300 font-extrabold transition-colors block mt-1">
                   Créez votre dossier KYC ici
                 </Link>
               </div>
