@@ -16,7 +16,7 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
           email: 'test@baou.ci',
           firstName: 'Jean',
           lastName: 'Koffi',
-          phone: '2250701020304',
+          phone: '+2250701020304',
           role: 'CLIENT',
           kycStatus: 'EN_ATTENTE_VALIDATION',
         }),
@@ -34,7 +34,7 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
             email: 'test@baou.ci',
             firstName: 'Jean',
             lastName: 'Koffi',
-            phone: '2250701020304',
+            phone: '+2250701020304',
             role: 'CLIENT',
             kycStatus: 'EN_ATTENTE_VALIDATION',
           },
@@ -51,7 +51,7 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
           email: 'test@baou.ci',
           firstName: 'Jean',
           lastName: 'Koffi',
-          phone: '2250701020304',
+          phone: '+2250701020304',
           role: 'CLIENT',
           kycStatus: 'EN_ATTENTE_VALIDATION',
         }),
@@ -78,6 +78,25 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
       });
     });
 
+    await page.route('**/market/stocks', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          { code: 'SNTS', name: 'SONATEL Sénégal', price: 15000, change: 1.2, open: 14800, high: 15100, low: 14750, volumeShares: 1000, volumeXof: 15000000 },
+          { code: 'CIEC', name: 'CIE Côte d\'Ivoire', price: 5000, change: -0.5, open: 5050, high: 5100, low: 4980, volumeShares: 500, volumeXof: 2500000 }
+        ]),
+      });
+    });
+
+    await page.route('**/market/sgis', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(['SGI de Test']),
+      });
+    });
+
     await page.route('**/wallets/transactions', async (route) => {
       const txs = pendingTxCreated ? [
         {
@@ -98,7 +117,6 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
 
     await page.route('**/pawapay/deposit', async (route) => {
       pendingTxCreated = true;
-      // Modifier le solde et le statut pour simuler le callback webhook à venir après 4 secondes
       setTimeout(() => {
         balanceTotal = 20000;
         txStatus = 'SUCCES';
@@ -126,8 +144,16 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
     await page.fill('#firstName', 'Jean');
     await page.fill('#lastName', 'Koffi');
     await page.fill('#email', 'test@baou.ci');
-    await page.fill('#phone', '2250701020304');
     await page.fill('#password', 'SecurePassword123!');
+    await page.fill('#confirmPassword', 'SecurePassword123!');
+
+    // Simuler l'upload des pièces justificatives
+    const file1 = { name: 'cni.pdf', mimeType: 'application/pdf', buffer: Buffer.from('fake cni') };
+    const file2 = { name: 'photo.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake photo') };
+    const file3 = { name: 'facture.pdf', mimeType: 'application/pdf', buffer: Buffer.from('fake doc') };
+    await page.locator('input[type="file"]').nth(0).setInputFiles(file1);
+    await page.locator('input[type="file"]').nth(1).setInputFiles(file2);
+    await page.locator('input[type="file"]').nth(2).setInputFiles(file3);
 
     // Mock de l'alerte d'inscription réussie
     page.once('dialog', async (dialog) => {
@@ -153,7 +179,7 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
     // Remplir le formulaire de dépôt
     await page.fill('input[type="number"]', '5000');
     await page.selectOption('select', 'ORANGE_CI');
-    await page.fill('input[placeholder="2250700000000"]', '2250701020304');
+    await page.fill('input[placeholder="2250700000000"]', '+2250701020304');
 
     // Intercepter la confirmation de la transaction finale
     page.once('dialog', async (dialog) => {

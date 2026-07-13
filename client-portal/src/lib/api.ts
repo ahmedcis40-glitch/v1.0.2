@@ -44,4 +44,8 @@ export const api = {
     initiateDeposit: (data: any, token: string) => requestApi('/pawapay/deposit', 'POST', data, token),
     initiateWithdraw: (data: any, token: string) => requestApi('/pawapay/withdraw', 'POST', data, token),
   },
+  market: {
+    getStocks: () => requestApi('/market/stocks', 'GET'),
+    getSgis: () => requestApi('/market/sgis', 'GET'),
+  },
 };
