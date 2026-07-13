@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useAuth } from '../providers';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Coins, 
   LogOut, 
@@ -51,9 +51,10 @@ interface Stock {
   volumeXof?: number;
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const { user, token, logout, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Core States
   const [cashWallet, setCashWallet] = useState<CashWallet | null>(null);
@@ -107,6 +108,20 @@ export default function Dashboard() {
       if (pollingInterval.current) clearInterval(pollingInterval.current);
     };
   }, []);
+
+  useEffect(() => {
+    const result = searchParams.get('paymentResult');
+    const depositAmount = searchParams.get('amount');
+    if (result) {
+      if (result === 'success') {
+        alert(`Dépôt réussi ! Votre solde cash a été crédité de ${parseFloat(depositAmount || '0').toLocaleString()} XOF.`);
+      } else if (result === 'failure') {
+        alert("Le dépôt a échoué ou a été annulé par l'utilisateur.");
+      }
+      router.replace('/dashboard');
+      fetchData();
+    }
+  }, [searchParams]);
 
   const fetchData = async () => {
     if (!token) return;
@@ -1028,5 +1043,17 @@ export default function Dashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="flex-1 flex items-center justify-center bg-slate-950 h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-emerald-500"></div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
