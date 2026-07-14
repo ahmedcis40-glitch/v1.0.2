@@ -25,6 +25,10 @@ export class RegisterDto {
   @IsOptional()
   whatsappPhone?: string;
 
+  @IsString()
+  @IsOptional()
+  kycDocuments?: string;
+
   @IsBoolean()
   @IsOptional()
   consentSMS?: boolean;

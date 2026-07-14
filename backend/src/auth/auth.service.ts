@@ -14,7 +14,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    const { email, password, firstName, lastName, phone, whatsappPhone, consentSMS, consentWhatsApp } = registerDto;
+    const { email, password, firstName, lastName, phone, whatsappPhone, kycDocuments, consentSMS, consentWhatsApp } = registerDto;
 
     // Vérifier si l'utilisateur existe déjà par email ou téléphone
     const existingUser = await this.prisma.user.findFirst({
@@ -43,6 +43,7 @@ export class AuthService {
           lastName,
           phone,
           whatsappPhone,
+          kycDocuments,
           consentSMS: consentSMS ?? true,
           consentWhatsApp: consentWhatsApp ?? true,
         },

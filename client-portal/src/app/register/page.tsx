@@ -43,6 +43,15 @@ export default function Register() {
     }
   };
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -68,12 +77,26 @@ export default function Register() {
     const phone = `+22507${randomSuffix}`;
 
     try {
+      // Conversion des fichiers en Base64
+      const cniRectoBase64 = await fileToBase64(cniRectoFile);
+      const cniVersoBase64 = await fileToBase64(cniVersoFile);
+      const photoBase64 = await fileToBase64(photoFile);
+      const factureBase64 = await fileToBase64(factureFile);
+
+      const kycDocumentsJson = JSON.stringify({
+        cniRecto: cniRectoBase64,
+        cniVerso: cniVersoBase64,
+        photo: photoBase64,
+        facture: factureBase64,
+      });
+
       await register({
         firstName,
         lastName,
         email,
         phone, // Fourni de façon transparente pour préserver la DB
         whatsappPhone,
+        kycDocuments: kycDocumentsJson,
         password,
         consentSMS,
         consentWhatsApp,
