@@ -114,6 +114,52 @@ function AdminDashboardContent() {
     }
   };
 
+  // Valider manuellement une transaction Wave (Dépôt ou Retrait)
+  const handleValidateTransaction = async (idInternal: string, status: 'succeeded' | 'failed', type: string) => {
+    if (!token) return;
+    setActionLoading(true);
+    setActionError('');
+    try {
+      const isDeposit = type === 'DEPOT';
+      const payload = isDeposit ? {
+        type: 'checkout.session.completed',
+        data: {
+          id: idInternal,
+          client_reference: idInternal,
+          status: status
+        }
+      } : {
+        type: status === 'succeeded' ? 'disbursement.succeeded' : 'disbursement.failed',
+        data: {
+          id: idInternal,
+          client_reference: idInternal
+        }
+      };
+
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const res = await fetch(`${backendUrl}/wave/webhook`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wave-signature': 'VALIDATED_SIMULATED',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error(`Erreur lors de la validation (${res.status})`);
+      }
+
+      await fetchAllData();
+      alert(`Transaction ${idInternal} validée avec succès (${status === 'succeeded' ? 'Approuvée' : 'Refusée'}).`);
+    } catch (e: any) {
+      alert(e.message || "Erreur de validation");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Exporter en CSV
   const handleExportCSV = () => {
     const headers = ['ID Transaction', 'Utilisateur', 'Type', 'Montant', 'Statut', 'Date Création'];
@@ -689,6 +735,7 @@ function AdminDashboardContent() {
                     <th className="p-4">Montant</th>
                     <th className="p-4">Statut</th>
                     <th className="p-4 text-right">Date</th>
+                    <th className="p-4 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
@@ -717,6 +764,26 @@ function AdminDashboardContent() {
                       </td>
                       <td className="p-4 text-right font-mono text-slate-500">
                         {new Date(tx.createdAt).toLocaleString()}
+                      </td>
+                      <td className="p-4 text-center space-x-2">
+                        {tx.status === 'EN_COURS' && (
+                          <>
+                            <button
+                              onClick={() => handleValidateTransaction(tx.idInternal, 'succeeded', tx.type)}
+                              disabled={actionLoading}
+                              className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer"
+                            >
+                              Valider
+                            </button>
+                            <button
+                              onClick={() => handleValidateTransaction(tx.idInternal, 'failed', tx.type)}
+                              disabled={actionLoading}
+                              className="bg-rose-500 hover:bg-rose-600 text-white px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer"
+                            >
+                              Refuser
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))}

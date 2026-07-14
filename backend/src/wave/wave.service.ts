@@ -43,49 +43,15 @@ export class WaveService {
     };
 
     try {
-      this.logger.log(`Initiation dépôt Wave Business pour l'utilisateur ${userId}, montant ${amount}`);
+      this.logger.log(`Initiation dépôt Wave Business (Lien Statique) pour l'utilisateur ${userId}, montant ${amount}`);
       
-      let responseData;
-      if (!this.apiKey || this.apiKey.includes('placeholder') || this.apiKey.includes('test')) {
-        this.logger.warn('Clé API Wave non configurée. Simulation du succès de l\'appel API.');
-        
-        const simSessionId = `wave_sess_${crypto.randomBytes(8).toString('hex')}`;
-        responseData = {
-          id: simSessionId,
-          wave_launch_url: `${clientAppUrl}/dashboard?paymentResult=success&amount=${amount}`
-        };
+      const waveMerchantUrl = 'https://pay.wave.com/m/M_ci_XRkfDq_9M8GP/c/ci/?src=p';
 
-        // Déclencher la validation automatique asynchrone après 1,5 seconde
-        setTimeout(async () => {
-          try {
-            await this.handleWebhook('simulated-signature', {
-              type: 'checkout.session.completed',
-              data: {
-                id: simSessionId,
-                client_reference: idInternal,
-                status: 'succeeded'
-              }
-            });
-          } catch (e: any) {
-            this.logger.error(`Erreur validation simulation dépôt: ${e.message}`);
-          }
-        }, 1500);
-
-      } else {
-        const response = await axios.post(endpoint, payload, {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        responseData = response.data;
-      }
-
-      // Mettre à jour la transaction locale avec l'identifiant de session Wave
+      // Mettre à jour la transaction locale avec l'URL de dépôt
       await this.prisma.waveTransaction.update({
         where: { idInternal },
         data: {
-          waveSessionId: responseData.id || idInternal,
+          waveSessionId: idInternal,
           updatedAt: new Date(),
         },
       });
@@ -101,9 +67,9 @@ export class WaveService {
 
       return {
         idInternal,
-        waveSessionId: responseData.id || idInternal,
+        waveSessionId: idInternal,
         status: 'PENDING',
-        redirectUrl: responseData.wave_launch_url || null,
+        redirectUrl: waveMerchantUrl,
       };
     } catch (error: any) {
       this.logger.error(`Erreur initiation dépôt Wave Business: ${error.message}`);

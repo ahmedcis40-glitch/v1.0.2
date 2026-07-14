@@ -52,13 +52,6 @@ describe('WaveService', () => {
       const userId = 'user-123';
       const dto = { amount: 5000, phone: '2250700000000' };
 
-      (axios.post as jest.Mock).mockResolvedValue({
-        data: {
-          id: 'wave-session-123',
-          wave_launch_url: 'https://wave.com/pay/session-123',
-        },
-      });
-
       mockPrismaService.waveTransaction.create.mockResolvedValue({
         idInternal: 'tx-uuid',
         userId,
@@ -69,7 +62,7 @@ describe('WaveService', () => {
 
       mockPrismaService.waveTransaction.update.mockResolvedValue({
         idInternal: 'tx-uuid',
-        waveSessionId: 'wave-session-123',
+        waveSessionId: 'tx-uuid',
         status: WaveTxStatus.EN_COURS,
       });
 
@@ -78,7 +71,7 @@ describe('WaveService', () => {
       expect(prisma.waveTransaction.create).toHaveBeenCalled();
       expect(prisma.waveTransaction.update).toHaveBeenCalled();
       expect(result.status).toBe('PENDING');
-      expect(result.redirectUrl).toBe('https://wave.com/pay/session-123');
+      expect(result.redirectUrl).toBe('https://pay.wave.com/m/M_ci_XRkfDq_9M8GP/c/ci/?src=p');
     });
   });
 

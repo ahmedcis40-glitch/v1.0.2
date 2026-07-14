@@ -181,13 +181,6 @@ describe('Fintech Backend (e2e)', () => {
         phone: '2250701020304',
       };
 
-      (axios.post as jest.Mock).mockResolvedValue({
-        data: {
-          id: 'wave-session-123',
-          wave_launch_url: 'https://wave.com/pay/session-123',
-        },
-      });
-
       mockPrisma.waveTransaction.create.mockImplementation((args) => Promise.resolve({
         idInternal: args.data.idInternal,
         userId: 'user-uuid-1',
