@@ -5,7 +5,10 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { PawaPayTxStatus, PawaPayTxType } from '@prisma/client';
+import { WaveTxStatus, WaveTxType } from '@prisma/client';
+import axios from 'axios';
+
+jest.mock('axios');
 
 describe('Fintech Backend (e2e)', () => {
   let app: INestApplication<App>;
@@ -22,7 +25,7 @@ describe('Fintech Backend (e2e)', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
-    pawaPayTransaction: {
+    waveTransaction: {
       create: jest.fn(),
       update: jest.fn(),
       findUnique: jest.fn(),
@@ -176,25 +179,31 @@ describe('Fintech Backend (e2e)', () => {
       const depositData = {
         amount: 5000,
         phone: '2250701020304',
-        correspondent: 'ORANGE_CI',
       };
 
-      mockPrisma.pawaPayTransaction.create.mockImplementation((args) => Promise.resolve({
+      (axios.post as jest.Mock).mockResolvedValue({
+        data: {
+          id: 'wave-session-123',
+          wave_launch_url: 'https://wave.com/pay/session-123',
+        },
+      });
+
+      mockPrisma.waveTransaction.create.mockImplementation((args) => Promise.resolve({
         idInternal: args.data.idInternal,
         userId: 'user-uuid-1',
         amount: 5000,
-        type: PawaPayTxType.DEPOT,
-        status: PawaPayTxStatus.EN_COURS,
+        type: WaveTxType.DEPOT,
+        status: WaveTxStatus.EN_COURS,
       }));
 
-      mockPrisma.pawaPayTransaction.update.mockImplementation((args) => Promise.resolve({
+      mockPrisma.waveTransaction.update.mockImplementation((args) => Promise.resolve({
         idInternal: args.where.idInternal,
-        idPawaPay: args.data.idPawaPay,
-        status: PawaPayTxStatus.EN_COURS,
+        waveSessionId: args.data.waveSessionId,
+        status: WaveTxStatus.EN_COURS,
       }));
 
       const res = await request(app.getHttpServer())
-        .post('/pawapay/deposit')
+        .post('/wave/deposit')
         .set('Authorization', `Bearer ${jwtToken}`)
         .send(depositData)
         .expect(201);
@@ -206,26 +215,30 @@ describe('Fintech Backend (e2e)', () => {
 
     it('should process callback payload and credit wallet', async () => {
       const callbackPayload = {
-        depositId: 'tx-1234',
-        status: 'COMPLETED',
+        type: 'checkout.session.completed',
+        data: {
+          id: 'tx-1234',
+          client_reference: 'tx-1234',
+          status: 'succeeded',
+        }
       };
 
-      mockPrisma.pawaPayTransaction.findUnique.mockResolvedValue({
+      mockPrisma.waveTransaction.findUnique.mockResolvedValue({
         idInternal: 'tx-1234',
         userId: 'user-uuid-1',
         amount: 5000,
-        type: PawaPayTxType.DEPOT,
-        status: PawaPayTxStatus.EN_COURS,
+        type: WaveTxType.DEPOT,
+        status: WaveTxStatus.EN_COURS,
       });
 
       await request(app.getHttpServer())
-        .post('/pawapay/callback')
-        .set('x-pawapay-signature', 'VALIDATED_SIMULATED')
+        .post('/wave/webhook')
+        .set('x-wave-signature', 'VALIDATED_SIMULATED')
         .send(callbackPayload)
         .expect(200);
 
       expect(mockPrisma.cashWallet.update).toHaveBeenCalled();
-      expect(mockPrisma.pawaPayTransaction.update).toHaveBeenCalled();
+      expect(mockPrisma.waveTransaction.update).toHaveBeenCalled();
     });
   });
 });

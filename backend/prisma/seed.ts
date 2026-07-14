@@ -28,7 +28,7 @@ async function main() {
 
   // Clean existing database records
   await prisma.auditLog.deleteMany({});
-  await prisma.pawaPayTransaction.deleteMany({});
+  await prisma.waveTransaction.deleteMany({});
   await prisma.dcaPlan.deleteMany({});
   await prisma.order.deleteMany({});
   await prisma.securitiesWallet.deleteMany({});

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrdersService } from '../orders/orders.service';
-import { KYCStatus, OrderStatus, PawaPayTxStatus } from '@prisma/client';
+import { KYCStatus, OrderStatus, WaveTxStatus } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -59,7 +59,7 @@ export class AdminService {
   }
 
   async getTransactions() {
-    return this.prisma.pawaPayTransaction.findMany({
+    return this.prisma.waveTransaction.findMany({
       include: {
         User: {
           select: {
@@ -76,18 +76,18 @@ export class AdminService {
   }
 
   async getIncidents() {
-    // 1. Transactions PawaPay en échec
-    const failedTxs = await this.prisma.pawaPayTransaction.findMany({
-      where: { status: PawaPayTxStatus.ECHEC },
+    // 1. Transactions Wave en échec
+    const failedTxs = await this.prisma.waveTransaction.findMany({
+      where: { status: WaveTxStatus.ECHEC },
       include: { User: { select: { email: true } } },
       orderBy: { updatedAt: 'desc' },
     });
 
     // 2. Transactions bloquées en "EN_COURS" depuis plus de 5 minutes (anomalie de callback)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const stuckTxs = await this.prisma.pawaPayTransaction.findMany({
+    const stuckTxs = await this.prisma.waveTransaction.findMany({
       where: {
-        status: PawaPayTxStatus.EN_COURS,
+        status: WaveTxStatus.EN_COURS,
         createdAt: { lt: fiveMinutesAgo },
       },
       include: { User: { select: { email: true } } },
@@ -105,23 +105,23 @@ export class AdminService {
     const usersCount = await this.prisma.user.count();
     const clientsCount = await this.prisma.user.count({ where: { role: 'CLIENT' } });
 
-    // Volumes des transactions PawaPay
-    const deposits = await this.prisma.pawaPayTransaction.findMany({
-      where: { type: 'DEPOT', status: PawaPayTxStatus.SUCCES },
+    // Volumes des transactions Wave
+    const deposits = await this.prisma.waveTransaction.findMany({
+      where: { type: 'DEPOT', status: WaveTxStatus.SUCCES },
       select: { amount: true },
     });
     const totalDeposits = deposits.reduce((sum, tx) => sum + tx.amount, 0);
 
-    const withdraws = await this.prisma.pawaPayTransaction.findMany({
-      where: { type: 'RETRAIT', status: PawaPayTxStatus.SUCCES },
+    const withdraws = await this.prisma.waveTransaction.findMany({
+      where: { type: 'RETRAIT', status: WaveTxStatus.SUCCES },
       select: { amount: true },
     });
     const totalWithdraws = withdraws.reduce((sum, tx) => sum + tx.amount, 0);
 
-    // Taux d'échec PawaPay
-    const totalTxs = await this.prisma.pawaPayTransaction.count();
-    const failedTxs = await this.prisma.pawaPayTransaction.count({
-      where: { status: PawaPayTxStatus.ECHEC },
+    // Taux d'échec Wave
+    const totalTxs = await this.prisma.waveTransaction.count();
+    const failedTxs = await this.prisma.waveTransaction.count({
+      where: { status: WaveTxStatus.ECHEC },
     });
     const failureRate = totalTxs > 0 ? (failedTxs / totalTxs) * 100 : 0.0;
 

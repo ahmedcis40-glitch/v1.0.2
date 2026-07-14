@@ -46,7 +46,7 @@ export class WalletsService {
   }
 
   async getTransactions(userId: string) {
-    return this.prisma.pawaPayTransaction.findMany({
+    return this.prisma.waveTransaction.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
