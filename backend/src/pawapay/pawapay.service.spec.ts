@@ -3,6 +3,9 @@ import { PawaPayService } from './pawapay.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BadRequestException } from '@nestjs/common';
 import { PawaPayTxStatus, PawaPayTxType } from '@prisma/client';
+import axios from 'axios';
+
+jest.mock('axios');
 
 describe('PawaPayService', () => {
   let service: PawaPayService;
@@ -49,6 +52,14 @@ describe('PawaPayService', () => {
       const userId = 'user-123';
       const dto = { amount: 5000, phone: '2250700000000', correspondent: 'ORANGE_CI' };
 
+      (axios.post as jest.Mock).mockResolvedValue({
+        data: {
+          depositId: 'tx-uuid',
+          status: 'ACCEPTED',
+          redirectUrl: 'https://redirect-url.com',
+        },
+      });
+
       mockPrismaService.pawaPayTransaction.create.mockResolvedValue({
         idInternal: 'tx-uuid',
         userId,
@@ -88,6 +99,13 @@ describe('PawaPayService', () => {
     it('should process withdrawal and freeze funds if balance is sufficient', async () => {
       const userId = 'user-123';
       const dto = { amount: 5000, phone: '2250700000000', correspondent: 'ORANGE_CI' };
+
+      (axios.post as jest.Mock).mockResolvedValue({
+        data: {
+          payoutId: 'tx-uuid',
+          status: 'ACCEPTED',
+        },
+      });
 
       mockPrismaService.cashWallet.findUnique.mockResolvedValue({
         userId,
