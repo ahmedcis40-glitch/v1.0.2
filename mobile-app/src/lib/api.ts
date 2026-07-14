@@ -5,6 +5,7 @@ export async function requestApi(endpoint: string, method = 'GET', body?: any, t
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    'bypass-tunnel-reminder': 'true',
   };
   
   if (token) {
