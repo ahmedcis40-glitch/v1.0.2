@@ -7,12 +7,21 @@ export class WalletsService {
   constructor(private prisma: PrismaService) {}
 
   async getCashWallet(userId: string) {
-    const wallet = await this.prisma.cashWallet.findUnique({
+    let wallet = await this.prisma.cashWallet.findUnique({
       where: { userId },
     });
 
     if (!wallet) {
-      throw new NotFoundException("Portefeuille cash introuvable.");
+      wallet = await this.prisma.cashWallet.create({
+        data: {
+          id: `wallet_${userId.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
+          userId,
+          balanceTotal: 0.0,
+          balanceFrozen: 0.0,
+          currency: 'XOF',
+          updatedAt: new Date(),
+        },
+      });
     }
 
     const available = wallet.balanceTotal - wallet.balanceFrozen;
@@ -41,9 +50,18 @@ export class WalletsService {
       throw new BadRequestException("Le montant doit être supérieur à zéro.");
     }
 
-    const wallet = await this.prisma.cashWallet.findUnique({ where: { userId } });
+    let wallet = await this.prisma.cashWallet.findUnique({ where: { userId } });
     if (!wallet) {
-      throw new NotFoundException("Portefeuille cash introuvable.");
+      wallet = await this.prisma.cashWallet.create({
+        data: {
+          id: `wallet_${userId.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
+          userId,
+          balanceTotal: 0.0,
+          balanceFrozen: 0.0,
+          currency: 'XOF',
+          updatedAt: new Date(),
+        },
+      });
     }
 
     return this.prisma.cashWallet.update({
