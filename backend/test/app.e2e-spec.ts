@@ -201,7 +201,7 @@ describe('Fintech Backend (e2e)', () => {
         .send(depositData)
         .expect(201);
 
-      expect(res.body.status).toBe('PENDING');
+      expect(res.body.status).toBe('SUCCESS');
       expect(res.body.idInternal).toBeDefined();
       expect(typeof res.body.idInternal).toBe('string');
     });

@@ -44,6 +44,7 @@ function AdminDashboardContent() {
 
   // Interactive Operations States
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -429,79 +430,140 @@ function AdminDashboardContent() {
           </div>
         )}
 
-        {/* Modal justificatifs KYC */}
-        {selectedUser && (
+               {selectedUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+            <div className={`w-full ${previewUrl ? 'max-w-3xl' : 'max-w-lg'} bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden transition-all duration-300`}>
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 via-white to-emerald-500"></div>
               
               <h3 className="text-lg font-black text-white mb-2">Justificatifs KYC de {selectedUser.firstName} {selectedUser.lastName}</h3>
-              <p className="text-[10px] text-slate-500 mb-6 font-mono">ID Client: {selectedUser.id}</p>
+              <p className="text-[10px] text-slate-400 mb-6 font-mono">
+                ID Client: {selectedUser.id} | WhatsApp: <span className="text-emerald-400 font-bold">{selectedUser.whatsappPhone || 'Aucun'}</span>
+              </p>
 
               {/* Lecture des documents JSON */}
               {(() => {
-                let docs = { cni: '', photo: '', facture: '' };
+                let docs = { cniRecto: '', cniVerso: '', photo: '', facture: '' };
                 try {
                   if (selectedUser.kycDocuments) {
-                    docs = JSON.parse(selectedUser.kycDocuments);
+                    const parsed = JSON.parse(selectedUser.kycDocuments);
+                    docs = { ...docs, ...parsed };
                   }
                 } catch(e) {}
 
                 return (
                   <div className="space-y-4">
-                    <div className="bg-slate-950 border border-slate-850 rounded-xl p-4 space-y-3.5 text-xs">
-                      <div className="flex justify-between items-center pb-2.5 border-b border-slate-850">
-                        <span className="font-bold text-slate-400">1. Carte Nationale d'Identité</span>
-                        {docs.cni ? (
-                          <a 
-                            href={docs.cni} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="text-orange-400 hover:underline flex items-center gap-1 font-bold"
-                          >
-                            <FileText className="h-3.5 w-3.5" /> Voir le document
-                          </a>
-                        ) : (
-                          <span className="text-slate-650">Non fournie</span>
-                        )}
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {/* Liste des justificatifs */}
+                      <div className="flex-1 space-y-3.5 bg-slate-950 border border-slate-850 rounded-xl p-4 text-xs">
+                        {/* CNI Recto */}
+                        <div className="flex justify-between items-center pb-2.5 border-b border-slate-850 gap-2">
+                          <span className="font-bold text-slate-400">1. Pièce d'Identité (Recto)</span>
+                          {docs.cniRecto ? (
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => setPreviewUrl(docs.cniRecto)}
+                                className="text-orange-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                              >
+                                Aperçu
+                              </button>
+                              <a href={docs.cniRecto} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white">
+                                <FileText className="h-3.5 w-3.5" />
+                              </a>
+                            </div>
+                          ) : (
+                            <span className="text-slate-650">Non fournie</span>
+                          )}
+                        </div>
+
+                        {/* CNI Verso */}
+                        <div className="flex justify-between items-center pb-2.5 border-b border-slate-850 gap-2">
+                          <span className="font-bold text-slate-400">2. Pièce d'Identité (Verso)</span>
+                          {docs.cniVerso ? (
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => setPreviewUrl(docs.cniVerso)}
+                                className="text-orange-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                              >
+                                Aperçu
+                              </button>
+                              <a href={docs.cniVerso} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white">
+                                <FileText className="h-3.5 w-3.5" />
+                              </a>
+                            </div>
+                          ) : (
+                            <span className="text-slate-650">Non fournie</span>
+                          )}
+                        </div>
+
+                        {/* Photo (Selfie) */}
+                        <div className="flex justify-between items-center pb-2.5 border-b border-slate-850 gap-2">
+                          <span className="font-bold text-slate-400">3. Photo d'Identité / Selfie</span>
+                          {docs.photo ? (
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => setPreviewUrl(docs.photo)}
+                                className="text-orange-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                              >
+                                Aperçu
+                              </button>
+                              <a href={docs.photo} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white">
+                                <FileText className="h-3.5 w-3.5" />
+                              </a>
+                            </div>
+                          ) : (
+                            <span className="text-slate-650">Non fournie</span>
+                          )}
+                        </div>
+
+                        {/* Facture */}
+                        <div className="flex justify-between items-center gap-2">
+                          <span className="font-bold text-slate-400">4. Justificatif de domicile</span>
+                          {docs.facture ? (
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => setPreviewUrl(docs.facture)}
+                                className="text-orange-400 hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                              >
+                                Aperçu
+                              </button>
+                              <a href={docs.facture} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white">
+                                <FileText className="h-3.5 w-3.5" />
+                              </a>
+                            </div>
+                          ) : (
+                            <span className="text-slate-650">Non fournie</span>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex justify-between items-center pb-2.5 border-b border-slate-850">
-                        <span className="font-bold text-slate-400">2. Photo de Profil (Selfie)</span>
-                        {docs.photo ? (
-                          <a 
-                            href={docs.photo} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="text-orange-400 hover:underline flex items-center gap-1 font-bold"
-                          >
-                            <FileText className="h-3.5 w-3.5" /> Voir la photo
-                          </a>
-                        ) : (
-                          <span className="text-slate-650">Non fournie</span>
-                        )}
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-400">3. Facture CIE ou SODECI</span>
-                        {docs.facture ? (
-                          <a 
-                            href={docs.facture} 
-                            target="_blank" 
-                            rel="noreferrer"
-                            className="text-orange-400 hover:underline flex items-center gap-1 font-bold"
-                          >
-                            <FileText className="h-3.5 w-3.5" /> Voir la facture
-                          </a>
-                        ) : (
-                          <span className="text-slate-650">Non fournie</span>
-                        )}
-                      </div>
+                      {/* Visionneuse intégrée */}
+                      {previewUrl && (
+                        <div className="flex-1 bg-slate-950 border border-slate-850 rounded-xl p-4 flex flex-col items-center justify-center min-h-[220px] relative">
+                          <span className="text-[10px] text-slate-500 absolute top-2 left-2 uppercase font-black">Aperçu du document</span>
+                          
+                          {previewUrl.toLowerCase().endsWith('.pdf') ? (
+                            <iframe 
+                              src={previewUrl} 
+                              className="w-full h-48 border-0 rounded-lg bg-slate-900"
+                              title="CNI Preview"
+                            />
+                          ) : (
+                            <img 
+                              src={previewUrl} 
+                              alt="KYC Preview" 
+                              className="max-w-full max-h-48 rounded-lg object-contain border border-slate-850"
+                            />
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-3 pt-4 border-t border-slate-850">
                       <button
-                        onClick={() => setSelectedUser(null)}
+                        onClick={() => {
+                          setSelectedUser(null);
+                          setPreviewUrl(null);
+                        }}
                         className="flex-1 bg-slate-950 border border-slate-850 hover:bg-slate-850 text-white font-bold py-3 rounded-xl text-xs transition-colors cursor-pointer"
                       >
                         Fermer

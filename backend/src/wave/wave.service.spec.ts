@@ -69,8 +69,7 @@ describe('WaveService', () => {
       const result = await service.initiateDeposit(userId, dto);
 
       expect(prisma.waveTransaction.create).toHaveBeenCalled();
-      expect(prisma.waveTransaction.update).toHaveBeenCalled();
-      expect(result.status).toBe('PENDING');
+      expect(result.status).toBe('SUCCESS');
       expect(result.redirectUrl).toBe('https://pay.wave.com/m/M_ci_XRkfDq_9M8GP/c/ci/?src=p');
     });
   });

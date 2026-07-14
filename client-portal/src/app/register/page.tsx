@@ -17,6 +17,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [whatsappPhone, setWhatsappPhone] = useState('');
 
   // Pièces Justificatives states
   const [cniRectoFile, setCniRectoFile] = useState<File | null>(null);
@@ -72,6 +73,7 @@ export default function Register() {
         lastName,
         email,
         phone, // Fourni de façon transparente pour préserver la DB
+        whatsappPhone,
         password,
         consentSMS,
         consentWhatsApp,
@@ -166,6 +168,22 @@ export default function Register() {
                   className="w-full bg-slate-950 border border-slate-850 rounded-lg pl-4 pr-10 py-2.5 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500 text-xs"
                 />
                 <Mail className="absolute right-3 top-3.5 h-4 w-4 text-slate-600" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Numéro WhatsApp (avec indicatif)</label>
+              <div className="relative">
+                <input
+                  type="tel"
+                  id="whatsappPhone"
+                  value={whatsappPhone}
+                  onChange={(e) => setWhatsappPhone(e.target.value)}
+                  placeholder="Ex: +2250701020304"
+                  required
+                  className="w-full bg-slate-950 border border-slate-850 rounded-lg pl-4 pr-10 py-2.5 text-white placeholder-slate-700 focus:outline-none focus:border-emerald-500 text-xs"
+                />
+                <span className="absolute right-3 top-3 text-[10px] text-slate-600 font-bold uppercase">WhatsApp</span>
               </div>
             </div>
 

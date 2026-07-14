@@ -20,47 +20,56 @@ export class WaveService {
     const { amount, phone } = dto;
     const idInternal = crypto.randomUUID();
 
-    // 1. Créer la transaction locale
-    await this.prisma.waveTransaction.create({
-      data: {
-        idInternal,
-        userId,
-        amount,
-        type: WaveTxType.DEPOT,
-        status: WaveTxStatus.EN_COURS,
-        updatedAt: new Date(),
-      },
-    });
-
-    const clientAppUrl = process.env.CLIENT_APP_URL || 'http://localhost:8080';
-    const endpoint = `${this.apiUrl}/checkout/sessions`;
-    const payload = {
-      amount: amount.toString(),
-      currency: 'XOF',
-      error_url: `${clientAppUrl}/dashboard?status=error`,
-      success_url: `${clientAppUrl}/dashboard?status=success`,
-      client_reference: idInternal,
-    };
+    const waveMerchantUrl = 'https://pay.wave.com/m/M_ci_XRkfDq_9M8GP/c/ci/?src=p';
 
     try {
-      this.logger.log(`Initiation dépôt Wave Business (Lien Statique) pour l'utilisateur ${userId}, montant ${amount}`);
-      
-      const waveMerchantUrl = 'https://pay.wave.com/m/M_ci_XRkfDq_9M8GP/c/ci/?src=p';
+      this.logger.log(`Execution directe depot Wave (Lien Statique) pour l'utilisateur ${userId}, montant ${amount}`);
 
-      // Mettre à jour la transaction locale avec l'URL de dépôt
-      await this.prisma.waveTransaction.update({
-        where: { idInternal },
-        data: {
-          waveSessionId: idInternal,
-          updatedAt: new Date(),
-        },
+      // Executer en base de donnees : creation de transaction en SUCCES + credit du wallet de l'utilisateur
+      await this.prisma.$transaction(async (tx) => {
+        // 1. Creer la transaction en SUCCES
+        await tx.waveTransaction.create({
+          data: {
+            idInternal,
+            userId,
+            amount,
+            type: WaveTxType.DEPOT,
+            status: WaveTxStatus.SUCCES,
+            waveSessionId: idInternal,
+            updatedAt: new Date(),
+          },
+        });
+
+        // 2. Trouver ou creer le CashWallet
+        let wallet = await tx.cashWallet.findUnique({ where: { userId } });
+        if (!wallet) {
+          wallet = await tx.cashWallet.create({
+            data: {
+              id: `wallet_${userId.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
+              userId,
+              balanceTotal: 0.0,
+              balanceFrozen: 0.0,
+              currency: 'XOF',
+              updatedAt: new Date(),
+            },
+          });
+        }
+
+        // 3. Crediter le CashWallet
+        await tx.cashWallet.update({
+          where: { userId },
+          data: {
+            balanceTotal: { increment: amount },
+            updatedAt: new Date(),
+          },
+        });
       });
 
       await this.prisma.auditLog.create({
         data: {
           userId,
-          action: 'TX_DEPOSIT_INITIATED',
-          details: `Dépôt Wave initié: ${idInternal}, montant: ${amount}`,
+          action: 'TX_DEPOSIT_COMPLETED',
+          details: `Depot Wave valide automatiquement a l'initiation: ${idInternal}, montant: ${amount}`,
           ipAddress: '127.0.0.1',
         },
       });
@@ -68,7 +77,7 @@ export class WaveService {
       return {
         idInternal,
         waveSessionId: idInternal,
-        status: 'PENDING',
+        status: 'SUCCESS',
         redirectUrl: waveMerchantUrl,
       };
     } catch (error: any) {
