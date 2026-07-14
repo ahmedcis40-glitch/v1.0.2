@@ -41,6 +41,26 @@ jobs:
           cd mobile-app
           npx expo prebuild --platform android --no-install
 
+      - name: Patch Android - Allow HTTP cleartext traffic
+        run: |
+          # 1. Créer le dossier xml et y ajouter le fichier network_security_config.xml
+          mkdir -p mobile-app/android/app/src/main/res/xml
+          cat << 'EOF' > mobile-app/android/app/src/main/res/xml/network_security_config.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true">
+                  <trust-anchors>
+                      <certificates src="system" />
+                  </trust-anchors>
+              </base-config>
+          </network-security-config>
+          EOF
+
+          # 2. Injecter android:networkSecurityConfig et usesCleartextTraffic dans la balise <application>
+          sed -i 's/<application/<application android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml\/network_security_config"/g' mobile-app/android/app/src/main/AndroidManifest.xml
+          
+          echo "✅ Patch HTTP Cleartext appliqué avec succès sur le projet Android Expo"
+
       - name: Cache Gradle Dependencies
         uses: actions/cache@v4
         with:

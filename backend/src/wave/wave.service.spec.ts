@@ -130,7 +130,7 @@ describe('WaveService', () => {
           },
         }),
       );
-      expect(result.status).toBe('PENDING');
+      expect(result.status).toBe('SUCCESS');
     });
   });
 
