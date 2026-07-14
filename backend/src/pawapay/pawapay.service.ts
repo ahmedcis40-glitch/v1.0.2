@@ -66,24 +66,13 @@ export class PawaPayService {
     try {
       this.logger.log(`Initiation dépôt PawaPay pour l'utilisateur ${userId}, montant ${amount}`);
       
-      let responseData;
-      if (!this.token || this.token.includes('placeholder')) {
-        this.logger.warn('Token PawaPay non configuré ou placeholder. Simulation du succès de l\'appel API.');
-        const clientAppUrl = process.env.CLIENT_APP_URL || 'http://localhost:8080';
-        responseData = {
-          depositId: idInternal,
-          status: 'ACCEPTED',
-          redirectUrl: `${clientAppUrl}/payment-simulation?depositId=${idInternal}&amount=${amount}&phone=${phone}`
-        };
-      } else {
-        const response = await axios.post(endpoint, payload, {
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        responseData = response.data;
-      }
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const responseData = response.data;
 
       // Mettre à jour la transaction avec l'identifiant PawaPay (qui est le même que idInternal ou renvoyé par PawaPay)
       await this.prisma.pawaPayTransaction.update({
@@ -184,24 +173,13 @@ export class PawaPayService {
     try {
       this.logger.log(`Initiation retrait PawaPay pour l'utilisateur ${userId}, montant ${amount}`);
       
-      let responseData;
-      if (!this.token || this.token.includes('placeholder')) {
-        this.logger.warn('Token PawaPay non configuré ou placeholder. Simulation du succès de l\'appel API.');
-        const clientAppUrl = process.env.CLIENT_APP_URL || 'http://localhost:8080';
-        responseData = {
-          payoutId: idInternal,
-          status: 'ACCEPTED',
-          redirectUrl: `${clientAppUrl}/payment-simulation?payoutId=${idInternal}&amount=${amount}&phone=${phone}&type=RETRAIT`
-        };
-      } else {
-        const response = await axios.post(`${this.apiUrl}/payouts`, payload, {
-          headers: {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        responseData = response.data;
-      }
+      const response = await axios.post(`${this.apiUrl}/payouts`, payload, {
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const responseData = response.data;
 
       await this.prisma.pawaPayTransaction.update({
         where: { idInternal },
