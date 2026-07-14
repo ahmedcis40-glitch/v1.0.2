@@ -12,16 +12,23 @@ export class WalletsService {
     });
 
     if (!wallet) {
-      wallet = await this.prisma.cashWallet.create({
-        data: {
-          id: `wallet_${userId.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
-          userId,
-          balanceTotal: 0.0,
-          balanceFrozen: 0.0,
-          currency: 'XOF',
-          updatedAt: new Date(),
-        },
-      });
+      try {
+        wallet = await this.prisma.cashWallet.create({
+          data: {
+            id: `wallet_${userId.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
+            userId,
+            balanceTotal: 0.0,
+            balanceFrozen: 0.0,
+            currency: 'XOF',
+            updatedAt: new Date(),
+          },
+        });
+      } catch (error) {
+        wallet = await this.prisma.cashWallet.findUnique({
+          where: { userId },
+        });
+        if (!wallet) throw error;
+      }
     }
 
     const available = wallet.balanceTotal - wallet.balanceFrozen;
@@ -52,16 +59,21 @@ export class WalletsService {
 
     let wallet = await this.prisma.cashWallet.findUnique({ where: { userId } });
     if (!wallet) {
-      wallet = await this.prisma.cashWallet.create({
-        data: {
-          id: `wallet_${userId.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
-          userId,
-          balanceTotal: 0.0,
-          balanceFrozen: 0.0,
-          currency: 'XOF',
-          updatedAt: new Date(),
-        },
-      });
+      try {
+        wallet = await this.prisma.cashWallet.create({
+          data: {
+            id: `wallet_${userId.slice(0, 8)}_${Date.now().toString().slice(-6)}`,
+            userId,
+            balanceTotal: 0.0,
+            balanceFrozen: 0.0,
+            currency: 'XOF',
+            updatedAt: new Date(),
+          },
+        });
+      } catch (error) {
+        wallet = await this.prisma.cashWallet.findUnique({ where: { userId } });
+        if (!wallet) throw error;
+      }
     }
 
     return this.prisma.cashWallet.update({
