@@ -44,16 +44,14 @@ export default function PaymentScreen({
 
       let res;
       if (isDeposit) {
-        res = await api.pawapay.initiateDeposit({
+        res = await api.wave.initiateDeposit({
           amount: parseFloat(amount),
           phone,
-          correspondent,
         }, token);
       } else {
-        res = await api.pawapay.initiateWithdraw({
+        res = await api.wave.initiateWithdraw({
           amount: parseFloat(amount),
           phone,
-          correspondent,
         }, token);
       }
 

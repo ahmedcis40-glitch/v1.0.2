@@ -101,7 +101,7 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
       const txs = pendingTxCreated ? [
         {
           idInternal: 'tx-1234',
-          idPawaPay: 'tx-1234',
+          waveSessionId: 'tx-1234',
           amount: 5000,
           type: 'DEPOT',
           status: txStatus,
@@ -115,7 +115,7 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
       });
     });
 
-    await page.route('**/pawapay/deposit', async (route) => {
+    await page.route('**/wave/deposit', async (route) => {
       pendingTxCreated = true;
       setTimeout(() => {
         balanceTotal = 20000;
@@ -127,7 +127,7 @@ test.describe('Flux Fintech Client-Portal E2E', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           idInternal: 'tx-1234',
-          idPawaPay: 'tx-1234',
+          waveSessionId: 'tx-1234',
           status: 'PENDING',
         }),
       });

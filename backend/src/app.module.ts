@@ -6,7 +6,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { WalletsModule } from './wallets/wallets.module';
-import { PawaPayModule } from './pawapay/pawapay.module';
+import { WaveModule } from './wave/wave.module';
 import { MarketModule } from './market/market.module';
 import { OrdersModule } from './orders/orders.module';
 import { AdminModule } from './admin/admin.module';
@@ -21,7 +21,7 @@ import { SupportModule } from './support/support.module';
     PrismaModule,
     AuthModule,
     WalletsModule,
-    PawaPayModule,
+    WaveModule,
     MarketModule,
     OrdersModule,
     AdminModule,

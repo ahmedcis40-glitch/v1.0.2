@@ -42,9 +42,9 @@ export const api = {
     getSecurities: (token: string) => requestApi('/wallets/securities', 'GET', null, token),
     getTransactions: (token: string) => requestApi('/wallets/transactions', 'GET', null, token),
   },
-  pawapay: {
-    initiateDeposit: (data: any, token: string) => requestApi('/pawapay/deposit', 'POST', data, token),
-    initiateWithdraw: (data: any, token: string) => requestApi('/pawapay/withdraw', 'POST', data, token),
+  wave: {
+    initiateDeposit: (data: any, token: string) => requestApi('/wave/deposit', 'POST', data, token),
+    initiateWithdraw: (data: any, token: string) => requestApi('/wave/withdraw', 'POST', data, token),
   },
   market: {
     getStocks: () => requestApi('/market/stocks', 'GET'),

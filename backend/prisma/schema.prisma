@@ -29,7 +29,7 @@ model User {
   CashWallet         CashWallet?
   DcaPlan            DcaPlan[]
   Order              Order[]
-  PawaPayTransaction PawaPayTransaction[]
+  WaveTransaction    WaveTransaction[]
   SecuritiesWallet   SecuritiesWallet[]
 }
 
@@ -81,17 +81,18 @@ model Order {
   User              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model PawaPayTransaction {
-  idInternal       String          @id
-  idPawaPay        String?         @unique
+model WaveTransaction {
+  idInternal       String       @id
+  waveSessionId    String?      @unique
+  wavePaymentId    String?      @unique
   userId           String
   amount           Float
-  type             PawaPayTxType
-  status           PawaPayTxStatus @default(EN_COURS)
+  type             WaveTxType
+  status           WaveTxStatus @default(EN_COURS)
   webhookSignature String?
-  createdAt        DateTime        @default(now())
+  createdAt        DateTime     @default(now())
   updatedAt        DateTime
-  User             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SecuritiesWallet {
@@ -132,13 +133,13 @@ enum OrderType {
   VENTE
 }
 
-enum PawaPayTxStatus {
+enum WaveTxStatus {
   EN_COURS
   SUCCES
   ECHEC
 }
 
-enum PawaPayTxType {
+enum WaveTxType {
   DEPOT
   RETRAIT
 }

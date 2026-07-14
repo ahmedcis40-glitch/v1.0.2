@@ -285,7 +285,7 @@ function AdminDashboardContent() {
               {/* Card 4 */}
               <div className="bg-slate-900 border border-slate-850 rounded-2xl p-5 space-y-3 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
-                <span className="text-[10px] text-slate-450 uppercase font-black tracking-wider block">Taux d'Échec PawaPay</span>
+                <span className="text-[10px] text-slate-450 uppercase font-black tracking-wider block">Taux d'Échec Wave</span>
                 <span className="text-3xl font-black text-rose-400 block">
                   {reporting ? `${reporting.failureRate}%` : '...'}
                 </span>
@@ -298,7 +298,7 @@ function AdminDashboardContent() {
             <div className="bg-slate-900 border border-slate-850 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center md:text-left">
                 <h3 className="text-lg font-bold text-white">Console d'administration financière</h3>
-                <p className="text-xs text-slate-400">Suivez l'activité boursière et traitez les transactions de la passerelle PawaPay en temps réel.</p>
+                <p className="text-xs text-slate-400">Suivez l'activité boursière et traitez les transactions de la passerelle Wave Business en temps réel.</p>
               </div>
               <div className="flex gap-1 h-3 w-32 rounded-full overflow-hidden shrink-0">
                 <div className="bg-[#ff8200] w-1/3"></div>
@@ -735,9 +735,9 @@ function AdminDashboardContent() {
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <XCircle className="h-5 w-5 text-rose-500 animate-pulse" />
-                  <span>Transactions PawaPay en Échec</span>
+                  <span>Transactions Wave Business en Échec</span>
                 </h3>
-                <p className="text-xs text-slate-400">Liste des dépôts et retraits ayant été rejetés par l'opérateur local.</p>
+                <p className="text-xs text-slate-400">Liste des dépôts et retraits ayant été rejetés par Wave.</p>
               </div>
 
               <div className="overflow-x-auto border border-slate-800 rounded-xl">
@@ -780,7 +780,7 @@ function AdminDashboardContent() {
                   <AlertTriangle className="h-5 w-5 text-orange-500 animate-pulse" />
                   <span>Transactions Suspectes en cours (&gt;5 min)</span>
                 </h3>
-                <p className="text-xs text-slate-400">Transactions à l'état EN_COURS n'ayant reçu aucune notification de la part du webhook PawaPay.</p>
+                <p className="text-xs text-slate-400">Transactions à l'état EN_COURS n'ayant reçu aucune notification de la part du webhook Wave.</p>
               </div>
 
               <div className="overflow-x-auto border border-slate-800 rounded-xl">
@@ -807,7 +807,7 @@ function AdminDashboardContent() {
                     {incidents?.stuckTransactions.length === 0 && (
                       <tr>
                         <td colSpan={5} className="p-8 text-center text-slate-500 font-bold">
-                          Aucun blocage suspect ou retard de webhook PawaPay détecté.
+                          Aucun blocage suspect ou retard de webhook Wave détecté.
                         </td>
                       </tr>
                     )}

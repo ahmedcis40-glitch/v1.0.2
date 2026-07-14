@@ -32,7 +32,8 @@ interface CashWallet {
 
 interface Transaction {
   idInternal: string;
-  idPawaPay: string | null;
+  waveSessionId?: string | null;
+  wavePaymentId?: string | null;
   amount: number;
   type: 'DEPOT' | 'RETRAIT';
   status: 'EN_COURS' | 'SUCCES' | 'ECHEC';
@@ -202,10 +203,9 @@ function DashboardContent() {
     setTxError('');
 
     try {
-      const res = await api.pawapay.initiateDeposit({
+      const res = await api.wave.initiateDeposit({
         amount: parseFloat(amount),
         phone,
-        correspondent,
       }, token);
 
       setShowDepositModal(false);
@@ -229,10 +229,9 @@ function DashboardContent() {
     setTxError('');
 
     try {
-      const res = await api.pawapay.initiateWithdraw({
+      const res = await api.wave.initiateWithdraw({
         amount: parseFloat(amount),
         phone,
-        correspondent,
       }, token);
 
       setShowWithdrawModal(false);

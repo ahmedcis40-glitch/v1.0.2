@@ -40,21 +40,27 @@ export const api = {
     getSecurities: (token: string) => requestApi('/wallets/securities', 'GET', null, token),
     getTransactions: (token: string) => requestApi('/wallets/transactions', 'GET', null, token),
   },
-  pawapay: {
-    initiateDeposit: (data: any, token: string) => requestApi('/pawapay/deposit', 'POST', data, token),
-    initiateWithdraw: (data: any, token: string) => requestApi('/pawapay/withdraw', 'POST', data, token),
+  wave: {
+    initiateDeposit: (data: any, token: string) => requestApi('/wave/deposit', 'POST', data, token),
+    initiateWithdraw: (data: any, token: string) => requestApi('/wave/withdraw', 'POST', data, token),
     simulateCallback: (id: string, status: 'COMPLETED' | 'FAILED', isWithdrawal = false) => {
-      return fetch(`${API_BASE}/pawapay/callback`, {
+      const type = isWithdrawal 
+        ? (status === 'COMPLETED' ? 'disbursement.succeeded' : 'disbursement.failed')
+        : 'checkout.session.completed';
+        
+      const payload = isWithdrawal
+        ? { id, client_reference: id }
+        : { id, client_reference: id, status: status === 'COMPLETED' ? 'succeeded' : 'failed' };
+
+      return fetch(`${API_BASE}/wave/webhook`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-pawapay-signature': 'VALIDATED_SIMULATED'
+          'x-wave-signature': 'VALIDATED_SIMULATED'
         },
         body: JSON.stringify({
-          depositId: isWithdrawal ? undefined : id,
-          payoutId: isWithdrawal ? id : undefined,
-          status,
-          failureCode: status === 'FAILED' ? 'USER_CANCELLED' : undefined
+          type,
+          data: payload
         })
       });
     }
