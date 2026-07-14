@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView, Platform } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView, Platform, Linking, StatusBar } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { api } from '../lib/api';
 import { ArrowLeft, Coins, CreditCard } from 'lucide-react-native';
@@ -56,8 +56,13 @@ export default function PaymentScreen({
       }
 
       if (res.redirectUrl) {
-        // Ouvrir la page de paiement / simulation PawaPay dans la WebView
-        setPaymentUrl(res.redirectUrl);
+        if (isDeposit) {
+          await Linking.openURL(res.redirectUrl);
+          Alert.alert("Dépôt Initié", "Vous avez été redirigé vers Wave pour finaliser votre paiement.");
+          onBack();
+        } else {
+          setPaymentUrl(res.redirectUrl);
+        }
       } else {
         Alert.alert("Succès", `${isDeposit ? 'Dépôt' : 'Retrait'} initié avec succès.`);
         onBack();
@@ -195,7 +200,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#020617',
-    paddingTop: Platform.OS === 'android' ? 25 : 0,
+    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   tricolor: {
     height: 3,

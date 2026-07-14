@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform, StatusBar, SafeAreaView } from 'react-native';
 import { storage } from '../lib/storage';
 import { Landmark, ArrowLeft, Wifi, WifiOff } from 'lucide-react-native';
 
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#020617',
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   tricolor: {
     height: 3,

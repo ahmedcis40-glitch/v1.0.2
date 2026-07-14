@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StatusBar, SafeAreaView } from 'react-native';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
 import { Lock, Mail, Settings, ShieldCheck } from 'lucide-react-native';
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#020617',
+    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   tricolor: {
     height: 3,
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingTop: 50,
+    paddingTop: 16,
   },
   settingsButton: {
     padding: 8,

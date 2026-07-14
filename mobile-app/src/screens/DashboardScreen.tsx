@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, Animated, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, Animated, TouchableOpacity, SafeAreaView, Dimensions, Platform, StatusBar, ActivityIndicator } from 'react-native';
 import { Coins, ShieldAlert, LogOut, TrendingUp, ArrowUpRight, ArrowDownLeft, Landmark } from 'lucide-react-native';
+import { api } from '../lib/api';
 
 const { width } = Dimensions.get('window');
 
@@ -19,8 +20,64 @@ export default function DashboardScreen({
   onInitiateWithdraw: () => void;
   isOffline: boolean;
 }) {
-  const [cashWallet, setCashWallet] = useState({ balanceTotal: 150000, balanceFrozen: 0 });
-  const [securitiesVal, setSecuritiesVal] = useState(650000);
+  const [cashWallet, setCashWallet] = useState({ balanceTotal: 0, balanceFrozen: 0 });
+  const [securitiesVal, setSecuritiesVal] = useState(0);
+  const [stocks, setStocks] = useState<any[]>([]);
+  const [loadingStocks, setLoadingStocks] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const fetchStocks = async () => {
+      try {
+        setLoadingStocks(true);
+        const res = await api.market.getStocks();
+        if (active && Array.isArray(res)) {
+          setStocks(res);
+        }
+      } catch (err) {
+        console.error("Erreur de récupération des cours:", err);
+      } finally {
+        if (active) setLoadingStocks(false);
+      }
+    };
+
+    fetchStocks();
+    const interval = setInterval(fetchStocks, 10000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    const fetchWalletData = async () => {
+      try {
+        const cashRes = await api.wallets.getCash(token);
+        if (active && cashRes) {
+          setCashWallet(cashRes);
+        }
+        
+        const secRes = await api.wallets.getSecurities(token);
+        if (active && Array.isArray(secRes)) {
+          const totalVal = secRes.reduce((sum, item) => sum + (item.quantite * item.coursMoyen), 0);
+          setSecuritiesVal(totalVal);
+        }
+      } catch (err) {
+        console.error("Erreur chargement portefeuilles:", err);
+      }
+    };
+
+    fetchWalletData();
+    const interval = setInterval(fetchWalletData, 5000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [token]);
   
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -161,41 +218,39 @@ export default function DashboardScreen({
         <View style={styles.marketSection}>
           <View style={styles.sectionHeader}>
             <Landmark size={16} color="#ff8200" />
-            <Text style={styles.sectionTitle}>Marché Actions BRVM</Text>
+            <Text style={styles.sectionTitle}>Marché Actions BRVM (En Direct)</Text>
           </View>
 
-          <View style={styles.stockItem}>
-            <View>
-              <Text style={styles.stockCode}>SNTS</Text>
-              <Text style={styles.stockName}>Sonatel</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.stockPrice}>16 500 F</Text>
-              <Text style={styles.stockChangeUp}>+1.85%</Text>
-            </View>
-          </View>
+          {loadingStocks && stocks.length === 0 ? (
+            <ActivityIndicator color="#ff8200" style={{ marginVertical: 20 }} />
+          ) : stocks.length === 0 ? (
+            <Text style={{ color: '#475569', fontSize: 10, textAlign: 'center', marginVertical: 10 }}>Aucune action disponible</Text>
+          ) : (
+            stocks.slice(0, 10).map((stock) => {
+              const changeVal = parseFloat(stock.changePercent || '0');
+              const isUp = changeVal > 0;
+              const isDown = changeVal < 0;
 
-          <View style={styles.stockItem}>
-            <View>
-              <Text style={styles.stockCode}>CIEC</Text>
-              <Text style={styles.stockName}>CIE Côte d'Ivoire</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.stockPrice}>2 250 F</Text>
-              <Text style={styles.stockChangeDown}>-1.20%</Text>
-            </View>
-          </View>
-
-          <View style={styles.stockItem}>
-            <View>
-              <Text style={styles.stockCode}>SGCB</Text>
-              <Text style={styles.stockName}>SG Côte d'Ivoire</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.stockPrice}>15 400 F</Text>
-              <Text style={styles.stockChangeFlat}>0.00%</Text>
-            </View>
-          </View>
+              return (
+                <View key={stock.symbol} style={styles.stockItem}>
+                  <View style={{ flex: 1, marginRight: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.stockCode}>{stock.symbol}</Text>
+                    </View>
+                    <Text style={styles.stockName} numberOfLines={1}>{stock.name}</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.stockPrice}>{stock.lastPrice?.toLocaleString()} F</Text>
+                    <Text style={
+                      isUp ? styles.stockChangeUp : isDown ? styles.stockChangeDown : styles.stockChangeFlat
+                    }>
+                      {isUp ? `+${stock.changePercent}%` : `${stock.changePercent}%`}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })
+          )}
         </View>
 
         <View style={{ height: 60 }} />
@@ -209,6 +264,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#020617',
+    paddingTop: Platform.OS === 'android' ? 40 : 0,
   },
   tricolor: {
     height: 3,
