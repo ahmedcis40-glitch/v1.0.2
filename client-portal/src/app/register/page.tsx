@@ -19,7 +19,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Pièces Justificatives states
-  const [cniFile, setCniFile] = useState<File | null>(null);
+  const [cniRectoFile, setCniRectoFile] = useState<File | null>(null);
+  const [cniVersoFile, setCniVersoFile] = useState<File | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [factureFile, setFactureFile] = useState<File | null>(null);
 
@@ -31,10 +32,11 @@ export default function Register() {
   const [error, setError] = useState('');
   const [regLoading, setRegLoading] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'cni' | 'photo' | 'facture') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'cniRecto' | 'cniVerso' | 'photo' | 'facture') => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      if (type === 'cni') setCniFile(file);
+      if (type === 'cniRecto') setCniRectoFile(file);
+      if (type === 'cniVerso') setCniVersoFile(file);
       if (type === 'photo') setPhotoFile(file);
       if (type === 'facture') setFactureFile(file);
     }
@@ -51,8 +53,8 @@ export default function Register() {
     }
 
     // 2. Validation de la présence de toutes les pièces justificatives
-    if (!cniFile || !photoFile || !factureFile) {
-      setError('Veuillez fournir toutes les pièces justificatives requises (CNI, Photo, Facture).');
+    if (!cniRectoFile || !cniVersoFile || !photoFile || !factureFile) {
+      setError('Veuillez fournir toutes les pièces justificatives requises (CNI Recto, CNI Verso, Photo, Facture).');
       return;
     }
 
@@ -200,23 +202,44 @@ export default function Register() {
             <h3 className="text-xs font-bold text-orange-400 uppercase tracking-widest border-b border-slate-800/60 pb-1">2. Pièces Justificatives (KYC)</h3>
             
             <div className="space-y-3">
-              {/* CNI */}
+              {/* CNI Recto */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-slate-950 border border-slate-850 rounded-lg gap-3">
                 <div className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-emerald-400" />
                   <div>
-                    <span className="text-xs font-bold text-slate-200 block">Carte Nationale d'Identité</span>
-                    <span className="text-[10px] text-slate-500">Format PDF, PNG, JPG</span>
+                    <span className="text-xs font-bold text-slate-200 block">Pièce d'Identité (Recto)</span>
+                    <span className="text-[10px] text-slate-500">Format PNG, JPG, PDF</span>
                   </div>
                 </div>
                 <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-[10px] font-bold text-slate-300 hover:text-white cursor-pointer hover:bg-slate-800 transition-colors">
                   <Upload className="h-3.5 w-3.5" />
                   <span>Uploader</span>
-                  <input type="file" onChange={(e) => handleFileChange(e, 'cni')} accept="image/*,application/pdf" className="hidden" />
+                  <input type="file" onChange={(e) => handleFileChange(e, 'cniRecto')} accept="image/*,application/pdf" className="hidden" />
                 </label>
-                {cniFile && (
+                {cniRectoFile && (
                   <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">
-                    {cniFile.name}
+                    {cniRectoFile.name}
+                  </span>
+                )}
+              </div>
+
+              {/* CNI Verso */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 bg-slate-950 border border-slate-850 rounded-lg gap-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-emerald-400" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-200 block">Pièce d'Identité (Verso)</span>
+                    <span className="text-[10px] text-slate-500">Format PNG, JPG, PDF</span>
+                  </div>
+                </div>
+                <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded text-[10px] font-bold text-slate-300 hover:text-white cursor-pointer hover:bg-slate-800 transition-colors">
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>Uploader</span>
+                  <input type="file" onChange={(e) => handleFileChange(e, 'cniVerso')} accept="image/*,application/pdf" className="hidden" />
+                </label>
+                {cniVersoFile && (
+                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">
+                    {cniVersoFile.name}
                   </span>
                 )}
               </div>
