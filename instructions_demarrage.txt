@@ -1,0 +1,54 @@
+========================================================================
+             GUIDE DE DEMARRAGE RAPIDE - BAOU FINANCE
+========================================================================
+
+Voici les commandes PowerShell a executer dans des terminaux separes 
+pour lancer l'integralite du projet localement.
+
+------------------------------------------------------------------------
+1. LE BACKEND (API NestJS)
+------------------------------------------------------------------------
+Ouvrez un terminal PowerShell :
+cd d:\Antigravity\projet\finance\v1.0.2\backend
+npm run start:dev
+
+* Accessible sur : http://localhost:3000
+
+------------------------------------------------------------------------
+2. LE PORTAIL CLIENT & ADMIN (Next.js)
+------------------------------------------------------------------------
+Ouvrez un deuxieme terminal PowerShell :
+cd d:\Antigravity\projet\finance\v1.0.2\client-portal
+npm run dev
+
+* Accessible sur : http://localhost:8080
+
+------------------------------------------------------------------------
+3. BASE DE DONNEES (Prisma Studio)
+------------------------------------------------------------------------
+Pour voir les utilisateurs, soldes et valider les transactions Wave :
+Ouvrez un troisieme terminal PowerShell :
+cd d:\Antigravity\projet\finance\v1.0.2\backend
+npx prisma studio --port 5555
+
+* Accessible sur : http://localhost:5555
+
+------------------------------------------------------------------------
+4. L'APPLICATION MOBILE (Expo)
+------------------------------------------------------------------------
+Ouvrez un quatrieme terminal PowerShell :
+cd d:\Antigravity\projet\finance\v1.0.2\mobile-app
+npx expo start
+
+------------------------------------------------------------------------
+5. TUNNEL DE CONNEXION MOBILE (Localtunnel)
+------------------------------------------------------------------------
+Pour connecter l'application mobile physique a votre serveur local :
+Ouvrez un cinquieme terminal PowerShell :
+npx localtunnel --port 3000
+
+========================================================================
+Note : Pour la validation des depots clients, rendez-vous sur le
+portail d'administration (http://localhost:8080/admin-portal/dashboard),
+onglet "Transactions", puis cliquez sur "Valider" en face des depots.
+========================================================================
