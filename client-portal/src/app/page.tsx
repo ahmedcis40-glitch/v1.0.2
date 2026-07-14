@@ -231,7 +231,7 @@ export default function Home() {
                   </span>
                 </h1>
                 <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                  Achetez des actions Sonatel, CIE, Solibra, SGCI et bien d'autres directement en ligne. Approvisionnez votre compte via Orange Money, MTN, Moov ou Wave avec la passerelle ultra-sécurisée PawaPay.
+                  Achetez des actions Sonatel, CIE, Solibra, SGCI et bien d'autres directement en ligne. Approvisionnez votre compte via Wave Côte d'Ivoire.
                 </p>
 
                 {/* Ligne drapeau de Côte d'Ivoire graphique */}
@@ -352,7 +352,7 @@ export default function Home() {
                   </div>
                   <h3 className="text-lg font-bold text-white">Rapidité de Dépôt / Retrait</h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Grâce à l'intégration de PawaPay, vos recharges et retraits Mobile Money (Orange Money, MTN, Moov, Wave) sont validés de manière instantanée et sécurisée.
+                    Grâce à l'intégration de Wave Côte d'Ivoire, vos recharges et retraits Mobile Money sont validés de manière instantanée et sécurisée.
                   </p>
                 </div>
 
@@ -587,8 +587,8 @@ export default function Home() {
                     <Coins className="h-4 w-4" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-white text-xs">4 Opérateurs Mobile Money</h4>
-                    <p className="text-[10px] text-slate-500">Orange Money, MTN Money, Moov Money et Wave Côte d'Ivoire.</p>
+                    <h4 className="font-bold text-white text-xs">Partenaire Mobile Money</h4>
+                    <p className="text-[10px] text-slate-500">Wave Côte d'Ivoire.</p>
                   </div>
                 </div>
               </div>

@@ -19,7 +19,7 @@ export default function PaymentScreen({
 }) {
   const [amount, setAmount] = useState('');
   const [phone, setPhone] = useState(user?.phone || '');
-  const [correspondent, setCorrespondent] = useState('ORANGE_CI');
+  const [correspondent, setCorrespondent] = useState('WAVE_CI');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
@@ -137,32 +137,7 @@ export default function PaymentScreen({
         ) : null}
 
         <View style={styles.form}>
-          
-          {/* Opérateurs */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>CHOIX DE L'OPÉRATEUR</Text>
-            <View style={styles.operatorsRow}>
-              {[
-                { id: 'ORANGE_CI', label: 'Orange' },
-                { id: 'MTN_CI', label: 'MTN' },
-                { id: 'MOOV_CI', label: 'Moov' },
-                { id: 'WAVE_CI', label: 'Wave' },
-              ].map((op) => {
-                const isSelected = correspondent === op.id;
-                return (
-                  <TouchableOpacity
-                    key={op.id}
-                    style={[styles.operatorBtn, isSelected && styles.operatorBtnSelected]}
-                    onPress={() => setCorrespondent(op.id)}
-                  >
-                    <Text style={[styles.operatorBtnText, isSelected && styles.operatorBtnTextSelected]}>
-                      {op.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
+         
 
           {/* Montant */}
           <View style={styles.inputGroup}>

@@ -73,7 +73,7 @@ function DashboardContent() {
   // Forms
   const [amount, setAmount] = useState('5000');
   const [phone, setPhone] = useState('');
-  const [correspondent, setCorrespondent] = useState('ORANGE_CI');
+  const [correspondent, setCorrespondent] = useState('WAVE_CI');
   const [txLoading, setTxLoading] = useState(false);
   const [txError, setTxError] = useState('');
 
@@ -696,19 +696,7 @@ function DashboardContent() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Opérateur</label>
-                <select 
-                  value={correspondent}
-                  onChange={(e) => setCorrespondent(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-850 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm"
-                >
-                  <option value="ORANGE_CI">Orange Money</option>
-                  <option value="MTN_CI">MTN Mobile Money</option>
-                  <option value="MOOV_CI">Moov Money</option>
-                  <option value="WAVE_CI">Wave</option>
-                </select>
-              </div>
+
 
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">N° Mobile Money de débit</label>
@@ -773,19 +761,7 @@ function DashboardContent() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Opérateur</label>
-                <select 
-                  value={correspondent}
-                  onChange={(e) => setCorrespondent(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-850 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-emerald-500 text-sm"
-                >
-                  <option value="ORANGE_CI">Orange Money</option>
-                  <option value="MTN_CI">MTN Mobile Money</option>
-                  <option value="MOOV_CI">Moov Money</option>
-                  <option value="WAVE_CI">Wave</option>
-                </select>
-              </div>
+
 
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">N° Mobile Money de crédit</label>
