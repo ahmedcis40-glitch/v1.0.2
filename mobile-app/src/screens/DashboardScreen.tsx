@@ -58,7 +58,7 @@ export default function DashboardScreen({
     };
 
     fetchStocks();
-    const interval = setInterval(fetchStocks, 10000);
+    const interval = setInterval(fetchStocks, 5000);
 
     return () => {
       active = false;

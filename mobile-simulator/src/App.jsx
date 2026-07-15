@@ -154,9 +154,11 @@ export default function App() {
   const [whatsappMessages, setWhatsappMessages] = useState([]);
   const [showMobileWhatsApp, setShowMobileWhatsApp] = useState(false);
 
-  // Load stocks on startup
+  // Load stocks periodically (every 5 seconds) to reflect market dynamics like client-portal
   useEffect(() => {
     fetchStocks();
+    const interval = setInterval(fetchStocks, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // Détecter le retour de paiement PawaPay et rafraîchir les données
