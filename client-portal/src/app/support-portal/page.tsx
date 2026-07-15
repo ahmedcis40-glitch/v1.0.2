@@ -245,7 +245,7 @@ function SupportPortalContent() {
                     <li><strong>Backend (NestJS)</strong> : Port 3000. Utilise Prisma ORM + PostgreSQL (Supabase) pour stocker les investisseurs, portefeuilles et transactions.</li>
                     <li><strong>Client Portal (Next.js)</strong> : Port 8080. Espace Web investisseur (trading en direct) et Back-office administrateur financier.</li>
                     <li><strong>Mobile App (Expo)</strong> : Client iOS/Android avec barre de navigation à 3 onglets (Portefeuille, Bourse, Historique).</li>
-                    <li><strong>Mobile Simulator (Vite)</strong> : Port 8082. Simulateur d'application boursière directement accessible dans le navigateur.</li>
+                    <li><strong>Mobile Simulator (Vite)</strong> : Port 8085. Simulateur d'application boursière directement accessible dans le navigateur.</li>
                   </ul>
                 </div>
               </div>
