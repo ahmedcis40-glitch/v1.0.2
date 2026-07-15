@@ -319,13 +319,9 @@ export default function App() {
       const resOrd = await fetch(`${API_BASE}/orders/my`, { headers: getHeaders() });
       if (resOrd.ok) setMyOrders(await resOrd.json());
 
-      // PawaPay transactions history
-      const resTx = await fetch(`${API_BASE}/pawapay/my`, { headers: getHeaders() });
+      // Wave transactions history
+      const resTx = await fetch(`${API_BASE}/wallets/transactions`, { headers: getHeaders() });
       if (resTx.ok) setMyTransactions(await resTx.json());
-
-      // DCA Plans
-      const resDca = await fetch(`${API_BASE}/dca/my`, { headers: getHeaders() });
-      if (resDca.ok) setDcaPlans(await resDca.json());
 
       // Reload stocks
       fetchStocks();
@@ -431,12 +427,12 @@ export default function App() {
     
     try {
       const endpoint = txType === 'DEPOT' ? 'deposit' : 'withdraw';
-      const res = await fetch(`${API_BASE}/pawapay/${endpoint}`, {
+      const res = await fetch(`${API_BASE}/wave/${endpoint}`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ 
           amount,
-          returnUrl: `${window.location.origin}${window.location.pathname}?payment=success`
+          phone: depositPhone || '+2250700000000'
         })
       });
       if (!res.ok) {
@@ -444,12 +440,17 @@ export default function App() {
         throw new Error(err.message || 'Erreur d\'initiation');
       }
       const result = await res.json();
-      setPendingTxId(result.transactionId);
-      if (result.paymentUrl) {
-        window.location.href = result.paymentUrl;
+      
+      if (txType === 'DEPOT') {
+        alert(`Dépôt Wave de ${amount.toLocaleString()} F initié avec succès ! Votre compte a été crédité. Redirection vers Wave...`);
+        if (result.paymentUrl) {
+          window.open(result.paymentUrl, '_blank');
+        }
       } else {
-        setShowPawaPayModal(true);
+        alert(`Demande de retrait Wave de ${amount.toLocaleString()} F enregistrée.`);
       }
+
+      fetchMobileData();
     } catch (err) {
       alert(err.message);
     }
@@ -458,40 +459,6 @@ export default function App() {
   // Webhook Simulation Sandbox
   const handleSimulatePayment = async (status) => {
     setShowPawaPayModal(false);
-    if (!pendingTxId) return;
-
-    try {
-      // 1. Get signed signature payload from simulate-webhook endpoint
-      const resSim = await fetch(`${API_BASE}/pawapay/simulate-webhook`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idInternal: pendingTxId,
-          status: status,
-          amount: Number(depositAmount)
-        })
-      });
-      if (!resSim.ok) throw new Error("Échec de la simulation");
-      const simResult = await resSim.json();
-
-      // 2. POST to our own webhook endpoint to simulate PawaPay calling us
-      const resWebhook = await fetch(`${API_BASE}/pawapay/webhook`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-pawapay-signature': simResult.signature
-        },
-        body: JSON.stringify(simResult.payload)
-      });
-
-      if (resWebhook.ok) {
-        alert(status === 'SUCCESS' 
-          ? (txType === 'DEPOT' ? 'Dépôt validé ! Compte crédité.' : 'Retrait validé ! Compte mobile crédité.') 
-          : 'Transaction annulée ou rejetée.');
-        fetchMobileData();
-      } else {
-        throw new Error("Erreur de webhook");
-      }
     } catch (e) {
       alert("Erreur de simulation de paiement: " + e.message);
     }
@@ -1236,7 +1203,7 @@ export default function App() {
                 </button>
                 <button onClick={() => setMobileScreen('trade')} className={`flex flex-col items-center gap-0.5 py-1 font-semibold ${mobileScreen === 'trade' ? 'text-orange-500' : 'text-gray-500'}`}>
                   <TrendingUp size={15} />
-                  <span>Bourse / Dépôt</span>
+                  <span>Bourse</span>
                 </button>
                 <button onClick={() => setMobileScreen('history')} className={`flex flex-col items-center gap-0.5 py-1 font-semibold ${mobileScreen === 'history' ? 'text-orange-500' : 'text-gray-500'}`}>
                   <FileText size={15} />
