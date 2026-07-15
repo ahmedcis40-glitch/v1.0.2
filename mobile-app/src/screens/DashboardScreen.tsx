@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Animated, TouchableOpacity, SafeAreaView, Dimensions, Platform, StatusBar, ActivityIndicator } from 'react-native';
-import { Coins, ShieldAlert, LogOut, TrendingUp, ArrowUpRight, ArrowDownLeft, Landmark } from 'lucide-react-native';
+import { Coins, ShieldAlert, LogOut, TrendingUp, ArrowUpRight, ArrowDownLeft, Landmark, Wallet, FileText } from 'lucide-react-native';
 import { api } from '../lib/api';
 
 const { width } = Dimensions.get('window');
@@ -24,6 +24,17 @@ export default function DashboardScreen({
   const [securitiesVal, setSecuritiesVal] = useState(0);
   const [stocks, setStocks] = useState<any[]>([]);
   const [loadingStocks, setLoadingStocks] = useState(false);
+  const [activeTab, setActiveTab] = useState<'wallet' | 'trade' | 'history'>('wallet');
+  const [myTransactions, setMyTransactions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!token || activeTab !== 'history') return;
+    api.wallets.getTransactions(token)
+      .then(res => {
+        if (Array.isArray(res)) setMyTransactions(res);
+      })
+      .catch(console.error);
+  }, [token, activeTab]);
 
   useEffect(() => {
     let active = true;
@@ -154,108 +165,191 @@ export default function DashboardScreen({
         scrollEventThrottle={16}
       >
         
-        {/* Indicateurs financiers supérieurs */}
-        <View style={styles.indicators}>
-          
-          {/* Solde Cash (Orange) */}
-          <View style={[styles.indicatorCard, styles.cardOrange]}>
-            <View style={styles.indicatorHeader}>
-              <Text style={styles.indicatorLabel}>SOLDE CASH DISPONIBLE</Text>
-              <Coins size={14} color="#ff8200" />
+        {/* Onglet 1 : Portefeuille */}
+        {activeTab === 'wallet' && (
+          <View style={styles.indicators}>
+            {/* Solde Cash (Orange) */}
+            <View style={[styles.indicatorCard, styles.cardOrange]}>
+              <View style={styles.indicatorHeader}>
+                <Text style={styles.indicatorLabel}>SOLDE CASH DISPONIBLE</Text>
+                <Coins size={14} color="#ff8200" />
+              </View>
+              <Text style={styles.indicatorValueOrange}>
+                {cashWallet.balanceTotal.toLocaleString()} F
+              </Text>
+              <Text style={styles.indicatorSub}>
+                Gelé : {cashWallet.balanceFrozen.toLocaleString()} F
+              </Text>
             </View>
-            <Text style={styles.indicatorValueOrange}>
-              {cashWallet.balanceTotal.toLocaleString()} F
-            </Text>
-            <Text style={styles.indicatorSub}>
-              Gelé : {cashWallet.balanceFrozen.toLocaleString()} F
-            </Text>
-          </View>
 
-          {/* Statut KYC (Blanc) */}
-          <View style={[styles.indicatorCard, styles.cardWhite]}>
-            <View style={styles.indicatorHeader}>
-              <Text style={styles.indicatorLabel}>CONFORMITÉ RÉGLEMENTAIRE (KYC)</Text>
-              <ShieldAlert size={14} color="#ffffff" />
+            {/* Statut KYC (Blanc) */}
+            <View style={[styles.indicatorCard, styles.cardWhite]}>
+              <View style={styles.indicatorHeader}>
+                <Text style={styles.indicatorLabel}>CONFORMITÉ RÉGLEMENTAIRE (KYC)</Text>
+                <ShieldAlert size={14} color="#ffffff" />
+              </View>
+              <Text style={styles.indicatorValueWhite}>
+                {user?.kycStatus === 'APPROUVE' ? 'DOSSIER APPROUVÉ' : 'ATTENTE VALIDATION'}
+              </Text>
+              <Text style={styles.indicatorSubWhite}>
+                {user?.kycStatus === 'APPROUVE' ? 'Accès boursier complet' : 'Achat d\'actions bloqué'}
+              </Text>
             </View>
-            <Text style={styles.indicatorValueWhite}>
-              {user?.kycStatus === 'APPROUVE' ? 'DOSSIER APPROUVÉ' : 'ATTENTE VALIDATION'}
-            </Text>
-            <Text style={styles.indicatorSubWhite}>
-              {user?.kycStatus === 'APPROUVE' ? 'Accès boursier complet' : 'Achat d\'actions bloqué'}
-            </Text>
-          </View>
 
-          {/* Portefeuille d'actions (Vert) */}
-          <View style={[styles.indicatorCard, styles.cardGreen]}>
-            <View style={styles.indicatorHeader}>
-              <Text style={styles.indicatorLabel}>PORTEFEUILLE ACTIONS BRVM</Text>
-              <TrendingUp size={14} color="#10b981" />
+            {/* Portefeuille d'actions (Vert) */}
+            <View style={[styles.indicatorCard, styles.cardGreen]}>
+              <View style={styles.indicatorHeader}>
+                <Text style={styles.indicatorLabel}>PORTEFEUILLE ACTIONS BRVM</Text>
+                <TrendingUp size={14} color="#10b981" />
+              </View>
+              <Text style={styles.indicatorValueGreen}>
+                {securitiesVal.toLocaleString()} F
+              </Text>
+              <Text style={styles.indicatorSub}>
+                Valorisation de vos titres cotés
+              </Text>
             </View>
-            <Text style={styles.indicatorValueGreen}>
-              {securitiesVal.toLocaleString()} F
-            </Text>
-            <Text style={styles.indicatorSub}>
-              Valorisation de vos titres cotés
-            </Text>
           </View>
+        )}
 
-        </View>
+        {/* Onglet 2 : Bourse / Dépôt */}
+        {activeTab === 'trade' && (
+          <>
+            {/* Boutons d'actions transactionnelles */}
+            <View style={styles.actionsGroup}>
+              <TouchableOpacity style={styles.btnAction} onPress={onInitiateDeposit}>
+                <ArrowUpRight size={18} color="#020617" style={{ marginRight: 6 }} />
+                <Text style={styles.btnActionText}>Effectuer un Dépôt</Text>
+              </TouchableOpacity>
 
-        {/* Boutons d'actions transactionnelles */}
-        <View style={styles.actionsGroup}>
-          <TouchableOpacity style={styles.btnAction} onPress={onInitiateDeposit}>
-            <ArrowUpRight size={18} color="#020617" style={{ marginRight: 6 }} />
-            <Text style={styles.btnActionText}>Effectuer un Dépôt</Text>
-          </TouchableOpacity>
+              <TouchableOpacity style={[styles.btnAction, styles.btnActionOutline]} onPress={onInitiateWithdraw}>
+                <ArrowDownLeft size={18} color="#ff8200" style={{ marginRight: 6 }} />
+                <Text style={styles.btnActionTextOutline}>Faire un Retrait</Text>
+              </TouchableOpacity>
+            </View>
 
-          <TouchableOpacity style={[styles.btnAction, styles.btnActionOutline]} onPress={onInitiateWithdraw}>
-            <ArrowDownLeft size={18} color="#ff8200" style={{ marginRight: 6 }} />
-            <Text style={styles.btnActionTextOutline}>Faire un Retrait</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Espace Boursier du Marché */}
+            <View style={styles.marketSection}>
+              <View style={styles.sectionHeader}>
+                <Landmark size={16} color="#ff8200" />
+                <Text style={styles.sectionTitle}>Marché Actions BRVM (En Direct)</Text>
+              </View>
 
-        {/* Espace Boursier du Marché */}
-        <View style={styles.marketSection}>
-          <View style={styles.sectionHeader}>
-            <Landmark size={16} color="#ff8200" />
-            <Text style={styles.sectionTitle}>Marché Actions BRVM (En Direct)</Text>
-          </View>
+              {loadingStocks && stocks.length === 0 ? (
+                <ActivityIndicator color="#ff8200" style={{ marginVertical: 20 }} />
+              ) : stocks.length === 0 ? (
+                <Text style={{ color: '#475569', fontSize: 10, textAlign: 'center', marginVertical: 10 }}>Aucune action disponible</Text>
+              ) : (
+                stocks.slice(0, 10).map((stock) => {
+                  const changeVal = parseFloat(stock.changePercent || '0');
+                  const isUp = changeVal > 0;
+                  const isDown = changeVal < 0;
 
-          {loadingStocks && stocks.length === 0 ? (
-            <ActivityIndicator color="#ff8200" style={{ marginVertical: 20 }} />
-          ) : stocks.length === 0 ? (
-            <Text style={{ color: '#475569', fontSize: 10, textAlign: 'center', marginVertical: 10 }}>Aucune action disponible</Text>
-          ) : (
-            stocks.slice(0, 10).map((stock) => {
-              const changeVal = parseFloat(stock.changePercent || '0');
-              const isUp = changeVal > 0;
-              const isDown = changeVal < 0;
-
-              return (
-                <View key={stock.symbol} style={styles.stockItem}>
-                  <View style={{ flex: 1, marginRight: 10 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Text style={styles.stockCode}>{stock.symbol}</Text>
+                  return (
+                    <View key={stock.symbol} style={styles.stockItem}>
+                      <View style={{ flex: 1, marginRight: 10 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={styles.stockCode}>{stock.symbol}</Text>
+                        </View>
+                        <Text style={styles.stockName} numberOfLines={1}>{stock.name}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.stockPrice}>{stock.lastPrice?.toLocaleString()} F</Text>
+                        <Text style={
+                          isUp ? styles.stockChangeUp : isDown ? styles.stockChangeDown : styles.stockChangeFlat
+                        }>
+                          {isUp ? `+${stock.changePercent}%` : `${stock.changePercent}%`}
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={styles.stockName} numberOfLines={1}>{stock.name}</Text>
+                  );
+                })
+              )}
+            </View>
+          </>
+        )}
+
+        {/* Onglet 3 : Historique */}
+        {activeTab === 'history' && (
+          <View style={styles.marketSection}>
+            <View style={styles.sectionHeader}>
+              <FileText size={16} color="#ff8200" />
+              <Text style={styles.sectionTitle}>Historique Wave (Dépôts / Retraits)</Text>
+            </View>
+
+            {myTransactions.length === 0 ? (
+              <Text style={{ color: '#475569', fontSize: 10, textAlign: 'center', marginVertical: 20 }}>Aucune transaction enregistrée</Text>
+            ) : (
+              myTransactions.map((tx) => (
+                <View key={tx.idInternal || tx.id} style={{ 
+                  flexDirection: 'row', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  borderBottomWidth: 1,
+                  borderBottomColor: '#0f172a'
+                }}>
+                  <View>
+                    <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: 'bold' }}>
+                      {tx.type === 'DEPOT' ? '📥 Dépôt Cash' : '📤 Retrait Cash'}
+                    </Text>
+                    <Text style={{ color: '#64748b', fontSize: 9, marginTop: 2 }}>
+                      Ref: {tx.idInternal?.slice(0, 8)}...
+                    </Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.stockPrice}>{stock.lastPrice?.toLocaleString()} F</Text>
-                    <Text style={
-                      isUp ? styles.stockChangeUp : isDown ? styles.stockChangeDown : styles.stockChangeFlat
-                    }>
-                      {isUp ? `+${stock.changePercent}%` : `${stock.changePercent}%`}
+                    <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: 'bold' }}>{tx.amount?.toLocaleString()} F</Text>
+                    <Text style={{ 
+                      fontSize: 9, 
+                      fontWeight: 'bold',
+                      marginTop: 2,
+                      color: tx.status === 'SUCCES' ? '#10b981' : tx.status === 'ECHEC' ? '#f43f5e' : '#eab308'
+                    }}>
+                      {tx.status}
                     </Text>
                   </View>
                 </View>
-              );
-            })
-          )}
-        </View>
+              ))
+            )}
+          </View>
+        )}
 
-        <View style={{ height: 60 }} />
+        <View style={{ height: 100 }} />
 
       </Animated.ScrollView>
+
+      {/* Barre de navigation inférieure fixe */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => setActiveTab('wallet')}
+        >
+          <Wallet size={18} color={activeTab === 'wallet' ? '#ff8200' : '#64748b'} />
+          <Text style={[styles.navButtonText, activeTab === 'wallet' && styles.navButtonTextActive]}>
+            Portefeuille
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => setActiveTab('trade')}
+        >
+          <TrendingUp size={18} color={activeTab === 'trade' ? '#ff8200' : '#64748b'} />
+          <Text style={[styles.navButtonText, activeTab === 'trade' && styles.navButtonTextActive]}>
+            Bourse
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => setActiveTab('history')}
+        >
+          <FileText size={18} color={activeTab === 'history' ? '#ff8200' : '#64748b'} />
+          <Text style={[styles.navButtonText, activeTab === 'history' && styles.navButtonTextActive]}>
+            Historique
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -522,5 +616,33 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontWeight: 'bold',
     marginTop: 2,
+  },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: '#090d16',
+    borderTopWidth: 1,
+    borderTopColor: '#1e293b',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingBottom: Platform.OS === 'ios' ? 12 : 0,
+  },
+  navButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+  },
+  navButtonText: {
+    fontSize: 8,
+    color: '#64748b',
+    fontWeight: 'bold',
+    marginTop: 3,
+  },
+  navButtonTextActive: {
+    color: '#ff8200',
   },
 });
