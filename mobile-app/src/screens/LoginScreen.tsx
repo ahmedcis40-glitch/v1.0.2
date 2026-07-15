@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StatusBar, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StatusBar, SafeAreaView, Linking } from 'react-native';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
 import { Lock, Mail, Settings, ShieldCheck } from 'lucide-react-native';
@@ -34,6 +34,16 @@ export default function LoginScreen({
       setError(err.message || "Identifiants invalides ou impossible de joindre le serveur.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRegisterRedirect = async () => {
+    try {
+      const baseIp = await storage.getServerIp();
+      const registerUrl = baseIp.replace(':3000', ':8080') + '/register';
+      await Linking.openURL(registerUrl);
+    } catch (err: any) {
+      setError("Impossible d'ouvrir le navigateur pour l'inscription. Veuillez visiter le portail web.");
     }
   };
 
@@ -114,6 +124,13 @@ export default function LoginScreen({
               <Text style={styles.loginButtonText}>Se connecter</Text>
             )}
           </TouchableOpacity>
+
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerText}>Vous n'avez pas de compte ?</Text>
+            <TouchableOpacity onPress={handleRegisterRedirect}>
+              <Text style={styles.registerLink}> S'inscrire</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.footer}>
@@ -253,6 +270,21 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 10,
     color: '#64748b',
+    fontWeight: 'bold',
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  registerText: {
+    fontSize: 11,
+    color: '#64748b',
+  },
+  registerLink: {
+    fontSize: 11,
+    color: '#ff8200',
     fontWeight: 'bold',
   },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, Animated, TouchableOpacity, SafeAreaView, Dimensions, Platform, StatusBar, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Animated, TouchableOpacity, SafeAreaView, Dimensions, Platform, StatusBar, ActivityIndicator, Modal, TextInput, Alert } from 'react-native';
 import { Coins, ShieldAlert, LogOut, TrendingUp, ArrowUpRight, ArrowDownLeft, Landmark, Wallet, FileText } from 'lucide-react-native';
 import { api } from '../lib/api';
 
@@ -26,6 +26,11 @@ export default function DashboardScreen({
   const [loadingStocks, setLoadingStocks] = useState(false);
   const [activeTab, setActiveTab] = useState<'wallet' | 'trade' | 'history'>('wallet');
   const [myTransactions, setMyTransactions] = useState<any[]>([]);
+  const [selectedStock, setSelectedStock] = useState<any | null>(null);
+  const [orderType, setOrderType] = useState<'ACHAT' | 'VENTE'>('ACHAT');
+  const [quantity, setQuantity] = useState('1');
+  const [orderPrice, setOrderPrice] = useState('');
+  const [submittingOrder, setSubmittingOrder] = useState(false);
 
   useEffect(() => {
     if (!token || activeTab !== 'history') return;
@@ -90,6 +95,51 @@ export default function DashboardScreen({
     };
   }, [token]);
   
+  const handleSelectStock = (stock: any) => {
+    if (user?.kycStatus !== 'APPROUVE') {
+      Alert.alert(
+        "Accès Boursier Bloqué",
+        "Votre dossier KYC n'est pas encore approuvé par la SGI. L'achat et la vente d'actions sont bloqués temporairement. Veuillez envoyer vos justificatifs depuis le portail d'administration pour validation."
+      );
+      return;
+    }
+    setSelectedStock(stock);
+    setOrderPrice(stock.lastPrice?.toString() || '0');
+    setQuantity('1');
+    setOrderType('ACHAT');
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!selectedStock || !token) return;
+    const qty = parseInt(quantity);
+    const price = parseFloat(orderPrice);
+    if (isNaN(qty) || qty <= 0) {
+      Alert.alert("Erreur", "Veuillez saisir une quantité valide.");
+      return;
+    }
+    if (isNaN(price) || price <= 0) {
+      Alert.alert("Erreur", "Veuillez saisir un cours proposé valide.");
+      return;
+    }
+
+    setSubmittingOrder(true);
+    try {
+      await api.orders.create({
+        symbol: selectedStock.symbol,
+        type: orderType,
+        quantity: qty,
+        price: price,
+      }, token);
+      
+      Alert.alert("Succès", `Votre ordre d'${orderType === 'ACHAT' ? 'achat' : 'vente'} pour ${qty} actions ${selectedStock.symbol} a été soumis avec succès à la SGI !`);
+      setSelectedStock(null);
+    } catch (err: any) {
+      Alert.alert("Erreur", err.message || "Impossible de soumettre l'ordre.");
+    } finally {
+      setSubmittingOrder(false);
+    }
+  };
+
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // L'éléphant grandit (scale de 1.0 à 2.2) lors du défilement vers le bas
@@ -246,7 +296,7 @@ export default function DashboardScreen({
                   const isDown = changeVal < 0;
 
                   return (
-                    <View key={stock.symbol} style={styles.stockItem}>
+                    <TouchableOpacity key={stock.symbol} style={styles.stockItem} onPress={() => handleSelectStock(stock)}>
                       <View style={{ flex: 1, marginRight: 10 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Text style={styles.stockCode}>{stock.symbol}</Text>
@@ -261,7 +311,7 @@ export default function DashboardScreen({
                           {isUp ? `+${stock.changePercent}%` : `${stock.changePercent}%`}
                         </Text>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   );
                 })
               )}
@@ -350,6 +400,120 @@ export default function DashboardScreen({
           </Text>
         </TouchableOpacity>
       </View>
+      {/* Modal de négociation d'actions */}
+      {selectedStock && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={!!selectedStock}
+          onRequestClose={() => setSelectedStock(null)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <View>
+                  <Text style={styles.modalTitle}>Passer un ordre SGI</Text>
+                  <Text style={{ color: '#64748b', fontSize: 10 }}>{selectedStock.name} ({selectedStock.symbol})</Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedStock(null)} style={styles.closeBtn}>
+                  <Text style={{ color: '#94a3b8', fontWeight: 'bold', fontSize: 14 }}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.orderTypeSwitch}>
+                <TouchableOpacity 
+                  style={[styles.switchBtn, orderType === 'ACHAT' && styles.switchBtnActive]} 
+                  onPress={() => setOrderType('ACHAT')}
+                >
+                  <Text style={[styles.switchText, orderType === 'ACHAT' && styles.switchTextActive]}>ACHAT</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.switchBtn, orderType === 'VENTE' && styles.switchBtnActive]} 
+                  onPress={() => setOrderType('VENTE')}
+                >
+                  <Text style={[styles.switchText, orderType === 'VENTE' && styles.switchTextActive]}>VENTE</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ gap: 16, marginVertical: 16 }}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>QUANTITÉ D'ACTIONS</Text>
+                  <View style={styles.inputRow}>
+                    <TouchableOpacity 
+                      style={styles.qtyBtn}
+                      onPress={() => setQuantity(Math.max(1, parseInt(quantity || '1') - 1).toString())}
+                    >
+                      <Text style={styles.qtyBtnText}>-</Text>
+                    </TouchableOpacity>
+                    <TextInput
+                      style={styles.inputField}
+                      value={quantity}
+                      onChangeText={setQuantity}
+                      keyboardType="number-pad"
+                      textAlign="center"
+                    />
+                    <TouchableOpacity 
+                      style={styles.qtyBtn}
+                      onPress={() => setQuantity((parseInt(quantity || '1') + 1).toString())}
+                    >
+                      <Text style={styles.qtyBtnText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>COURS PROPOSÉ (XOF)</Text>
+                  <TextInput
+                    style={[styles.inputField, { textAlign: 'left', paddingHorizontal: 12 }]}
+                    value={orderPrice}
+                    onChangeText={setOrderPrice}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+              </View>
+
+              {/* Résumé financier */}
+              {(() => {
+                const qty = parseInt(quantity || '0');
+                const price = parseFloat(orderPrice || '0');
+                const brut = qty * price;
+                const commission = brut * 0.0156;
+                const total = orderType === 'ACHAT' ? brut + commission : brut - commission;
+                return (
+                  <View style={styles.summaryBox}>
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Montant Brut</Text>
+                      <Text style={styles.summaryVal}>{brut.toLocaleString()} F</Text>
+                    </View>
+                    <View style={styles.summaryRow}>
+                      <Text style={styles.summaryLabel}>Frais SGI (1.56%)</Text>
+                      <Text style={styles.summaryVal}>{commission.toLocaleString(undefined, { maximumFractionDigits: 2 })} F</Text>
+                    </View>
+                    <View style={[styles.summaryRow, { borderTopWidth: 1, borderTopColor: '#1e293b', paddingTop: 8, marginTop: 8 }]}>
+                      <Text style={[styles.summaryLabel, { color: '#ffffff', fontWeight: 'bold' }]}>Estimation Totale</Text>
+                      <Text style={[styles.summaryVal, { color: orderType === 'ACHAT' ? '#ff8200' : '#10b981', fontWeight: 'bold' }]}>
+                        {total.toLocaleString(undefined, { maximumFractionDigits: 2 })} F
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })()}
+
+              <TouchableOpacity 
+                style={[styles.placeOrderBtn, submittingOrder && styles.placeOrderBtnDisabled]}
+                onPress={handlePlaceOrder}
+                disabled={submittingOrder}
+              >
+                {submittingOrder ? (
+                  <ActivityIndicator color="#020617" size="small" />
+                ) : (
+                  <Text style={styles.placeOrderBtnText}>Soumettre l'ordre à la SGI</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -644,5 +808,137 @@ const styles = StyleSheet.create({
   },
   navButtonTextActive: {
     color: '#ff8200',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(2, 6, 23, 0.85)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#090d16',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+  closeBtn: {
+    padding: 8,
+    backgroundColor: '#0f172a',
+    borderRadius: 10,
+  },
+  orderTypeSwitch: {
+    flexDirection: 'row',
+    backgroundColor: '#020617',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+  },
+  switchBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  switchBtnActive: {
+    backgroundColor: '#ff8200',
+  },
+  switchText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#64748b',
+  },
+  switchTextActive: {
+    color: '#020617',
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#475569',
+    letterSpacing: 1.2,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  qtyBtn: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyBtnText: {
+    fontSize: 20,
+    color: '#ff8200',
+    fontWeight: 'bold',
+  },
+  inputField: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#020617',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 12,
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  summaryBox: {
+    backgroundColor: '#020617',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 16,
+    padding: 16,
+    gap: 8,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryLabel: {
+    fontSize: 11,
+    color: '#64748b',
+  },
+  summaryVal: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  placeOrderBtn: {
+    backgroundColor: '#ff8200',
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  placeOrderBtnText: {
+    color: '#020617',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  placeOrderBtnDisabled: {
+    backgroundColor: 'rgba(255, 130, 0, 0.5)',
   },
 });
