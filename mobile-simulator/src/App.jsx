@@ -343,7 +343,7 @@ export default function App() {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: mobileEmail, password: mobilePassword })
+        body: JSON.stringify({ phoneOrEmail: mobileEmail, password: mobilePassword })
       });
       if (!res.ok) {
         const err = await res.json();
