@@ -459,9 +459,6 @@ export default function App() {
   // Webhook Simulation Sandbox
   const handleSimulatePayment = async (status) => {
     setShowPawaPayModal(false);
-    } catch (e) {
-      alert("Erreur de simulation de paiement: " + e.message);
-    }
   };
 
   // Place Order handler
