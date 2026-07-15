@@ -236,4 +236,11 @@ export class WalletsService {
       });
     }
   }
+
+  async getDocuments(userId: string) {
+    return this.prisma.sgiDocument.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

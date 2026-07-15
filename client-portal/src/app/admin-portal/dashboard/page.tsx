@@ -50,6 +50,13 @@ function AdminDashboardContent() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [priceRealInput, setPriceRealInput] = useState('');
 
+  // SGI Document Upload States
+  const [docTitle, setDocTitle] = useState('');
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+
   useEffect(() => {
     if (!loading) {
       if (!user || user.role !== 'ADMIN') {
@@ -158,6 +165,56 @@ function AdminDashboardContent() {
       alert(e.message || "Erreur de validation");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleUploadDocument = async () => {
+    if (!selectedUser || !docTitle || !docFile) {
+      setUploadError("Veuillez saisir un titre et sélectionner un fichier PDF.");
+      return;
+    }
+
+    setUploadingDoc(true);
+    setUploadError('');
+    setUploadSuccess(false);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Data = reader.result as string;
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/admin/users/${selectedUser.id}/documents`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              title: docTitle,
+              fileName: docFile.name,
+              fileData: base64Data
+            })
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || "Erreur lors de l'envoi");
+          }
+
+          setUploadSuccess(true);
+          setDocTitle('');
+          setDocFile(null);
+          fetchAllData();
+        } catch (innerErr: any) {
+          setUploadError(innerErr.message || "Erreur lors de l'envoi au serveur.");
+        } finally {
+          setUploadingDoc(false);
+        }
+      };
+      reader.readAsDataURL(docFile);
+    } catch (e: any) {
+      setUploadError(e.message || "Erreur de lecture du fichier.");
+      setUploadingDoc(false);
     }
   };
 
@@ -556,6 +613,46 @@ function AdminDashboardContent() {
                           )}
                         </div>
                       )}
+                      
+                      {/* Section Envoi de document PDF (Convention, relevé, contrat...) */}
+                      <div className="bg-slate-950 border border-slate-850 rounded-2xl p-4 space-y-3 mt-4">
+                        <span className="text-[10px] text-orange-500 uppercase font-black tracking-wider block">Transmettre un document PDF (Convention, Relevé)</span>
+                        
+                        {uploadError && <div className="text-[10px] text-rose-500 font-bold">{uploadError}</div>}
+                        {uploadSuccess && <div className="text-[10px] text-emerald-500 font-bold">Document transmis avec succès au client !</div>}
+
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            placeholder="Titre du document (ex: Convention de compte)"
+                            value={docTitle}
+                            onChange={(e) => setDocTitle(e.target.value)}
+                            className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500"
+                          />
+                          <label className="bg-slate-900 border border-slate-800 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer flex items-center justify-center">
+                            {docFile ? docFile.name.substring(0, 15) + '...' : 'Choisir PDF'}
+                            <input 
+                              type="file" 
+                              accept="application/pdf"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  setDocFile(e.target.files[0]);
+                                  setUploadError('');
+                                  setUploadSuccess(false);
+                                }
+                              }}
+                              className="hidden" 
+                            />
+                          </label>
+                        </div>
+                        <button 
+                          onClick={handleUploadDocument}
+                          disabled={uploadingDoc || !docTitle || !docFile}
+                          className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-black py-2 rounded-xl text-xs transition-colors cursor-pointer"
+                        >
+                          {uploadingDoc ? 'Envoi en cours...' : 'Envoyer le document PDF'}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex gap-3 pt-4 border-t border-slate-850">

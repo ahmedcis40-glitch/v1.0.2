@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Body, UseGuards, Post } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -10,6 +10,16 @@ import { Role, KYCStatus, OrderStatus } from '@prisma/client';
 @Roles(Role.ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  @Post('users/:id/documents')
+  async uploadDocument(
+    @Param('id') userId: string,
+    @Body('title') title: string,
+    @Body('fileName') fileName: string,
+    @Body('fileData') fileData: string,
+  ) {
+    return this.adminService.uploadDocument(userId, title, fileName, fileData);
+  }
 
   @Get('users')
   async getUsers() {

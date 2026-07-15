@@ -145,4 +145,31 @@ export class AdminService {
     }
     return this.ordersService.updateOrderStatus(orderId, status, priceReal);
   }
+
+  async uploadDocument(userId: string, title: string, fileName: string, fileData: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException("Utilisateur introuvable.");
+    }
+
+    const document = await this.prisma.sgiDocument.create({
+      data: {
+        userId,
+        title,
+        fileName,
+        fileData,
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId,
+        action: 'DOCUMENT_UPLOADED',
+        details: `Document SGI "${title}" transmis au client par l'administrateur`,
+        ipAddress: '127.0.0.1',
+      },
+    });
+
+    return document;
+  }
 }

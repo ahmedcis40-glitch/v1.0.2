@@ -56,6 +56,7 @@ export default function App() {
   const [myTransactions, setMyTransactions] = useState([]);
   const [stocks, setStocks] = useState([]);
   const [dcaPlans, setDcaPlans] = useState([]);
+  const [myDocuments, setMyDocuments] = useState([]);
 
   // Top 20 plus fortes hausses du jour
   const top20Gainers = [...stocks]
@@ -324,6 +325,10 @@ export default function App() {
       // Wave transactions history
       const resTx = await fetch(`${API_BASE}/wallets/transactions`, { headers: getHeaders() });
       if (resTx.ok) setMyTransactions(await resTx.json());
+
+      // SGI Documents
+      const resDocs = await fetch(`${API_BASE}/wallets/documents`, { headers: getHeaders() });
+      if (resDocs.ok) setMyDocuments(await resDocs.json());
 
       // Reload stocks
       fetchStocks();
@@ -964,6 +969,37 @@ export default function App() {
                     >
                       <FileText size={12} /> Télécharger la Convention (PDF)
                     </button>
+
+                    {/* Documents SGI Transmis */}
+                    {myDocuments && myDocuments.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-800 space-y-2">
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-wider block">Documents SGI Reçus</span>
+                        <div className="space-y-1.5">
+                          {myDocuments.map((doc, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-2 bg-gray-950 border border-gray-850 rounded-lg">
+                              <div className="flex-1 min-w-0 pr-2">
+                                <div className="text-[10px] font-bold text-gray-200 truncate">{doc.title}</div>
+                                <div className="text-[8px] text-gray-500 font-mono mt-0.5">{new Date(doc.createdAt).toLocaleDateString()}</div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = doc.fileData;
+                                  link.download = doc.fileName;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  alert(`Téléchargement de ${doc.fileName} démarré.`);
+                                }}
+                                className="px-2 py-1 bg-indigo-900/50 hover:bg-indigo-900 border border-indigo-750 text-indigo-400 font-bold rounded text-[8px]"
+                              >
+                                Ouvrir
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

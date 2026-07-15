@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, Animated, TouchableOpacity, SafeAreaView, Dimensions, Platform, StatusBar, ActivityIndicator, Modal, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Animated, TouchableOpacity, SafeAreaView, Dimensions, Platform, StatusBar, ActivityIndicator, Modal, TextInput, Alert, Linking } from 'react-native';
 import { Coins, ShieldAlert, LogOut, TrendingUp, ArrowUpRight, ArrowDownLeft, Landmark, Wallet, FileText } from 'lucide-react-native';
 import { api } from '../lib/api';
 
@@ -31,6 +31,7 @@ export default function DashboardScreen({
   const [quantity, setQuantity] = useState('1');
   const [orderPrice, setOrderPrice] = useState('');
   const [submittingOrder, setSubmittingOrder] = useState(false);
+  const [myDocuments, setMyDocuments] = useState<any[]>([]);
 
   useEffect(() => {
     if (!token || activeTab !== 'history') return;
@@ -80,6 +81,11 @@ export default function DashboardScreen({
         if (active && Array.isArray(secRes)) {
           const totalVal = secRes.reduce((sum, item) => sum + (item.quantite * item.coursMoyen), 0);
           setSecuritiesVal(totalVal);
+        }
+
+        const docsRes = await api.wallets.getDocuments(token);
+        if (active && Array.isArray(docsRes)) {
+          setMyDocuments(docsRes);
         }
       } catch (err) {
         console.error("Erreur chargement portefeuilles:", err);
@@ -259,6 +265,48 @@ export default function DashboardScreen({
                 Valorisation de vos titres cotés
               </Text>
             </View>
+
+            {/* Documents SGI Transmis */}
+            {myDocuments && myDocuments.length > 0 && (
+              <View style={{ marginTop: 24, gap: 12 }}>
+                <Text style={{ fontSize: 10, fontWeight: '900', color: '#ff8200', letterSpacing: 1.2 }}>DOCUMENTS TRANSMIS PAR LA SGI</Text>
+                <View style={{ gap: 12 }}>
+                  {myDocuments.map((doc, idx) => (
+                    <View key={idx} style={{ 
+                      flexDirection: 'row', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      backgroundColor: '#090d16',
+                      borderWidth: 1,
+                      borderColor: '#1e293b',
+                      borderRadius: 16,
+                      padding: 16
+                    }}>
+                      <View style={{ flex: 1, marginRight: 12 }}>
+                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: 'bold' }}>{doc.title}</Text>
+                        <Text style={{ color: '#64748b', fontSize: 9, marginTop: 4 }}>
+                          Transmis le {new Date(doc.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      <TouchableOpacity 
+                        onPress={() => {
+                          Linking.openURL(doc.fileData);
+                          Alert.alert("Téléchargement", `Ouverture de ${doc.fileName}...`);
+                        }}
+                        style={{ 
+                          backgroundColor: '#ff8200', 
+                          paddingHorizontal: 12, 
+                          paddingVertical: 8, 
+                          borderRadius: 8 
+                        }}
+                      >
+                        <Text style={{ color: '#020617', fontSize: 10, fontWeight: '900' }}>Ouvrir</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
           </View>
         )}
 

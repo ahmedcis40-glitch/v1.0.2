@@ -39,6 +39,7 @@ export const api = {
     getCash: (token: string) => requestApi('/wallets/cash', 'GET', null, token),
     getSecurities: (token: string) => requestApi('/wallets/securities', 'GET', null, token),
     getTransactions: (token: string) => requestApi('/wallets/transactions', 'GET', null, token),
+    getDocuments: (token: string) => requestApi('/wallets/documents', 'GET', null, token),
   },
   wave: {
     initiateDeposit: (data: any, token: string) => requestApi('/wave/deposit', 'POST', data, token),

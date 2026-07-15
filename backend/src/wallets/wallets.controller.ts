@@ -23,4 +23,9 @@ export class WalletsController {
   async getTransactions(@GetUser() user: User) {
     return this.walletsService.getTransactions(user.id);
   }
+
+  @Get('documents')
+  async getDocuments(@GetUser() user: User) {
+    return this.walletsService.getDocuments(user.id);
+  }
 }

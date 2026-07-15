@@ -63,6 +63,7 @@ function DashboardContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [marketStocks, setMarketStocks] = useState<Stock[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [myDocuments, setMyDocuments] = useState<any[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   // Modals
@@ -137,18 +138,20 @@ function DashboardContent() {
   const fetchData = async () => {
     if (!token) return;
     try {
-      const [walletData, securitiesData, txData, stocksData, ordersData] = await Promise.all([
+      const [walletData, securitiesData, txData, stocksData, ordersData, docsData] = await Promise.all([
         api.wallets.getCash(token),
         api.wallets.getSecurities(token),
         api.wallets.getTransactions(token),
         api.market.getStocks(),
         api.orders.getMy(token),
+        api.wallets.getDocuments(token),
       ]);
       setCashWallet(walletData);
       setSecurities(securitiesData);
       setTransactions(txData);
       setMarketStocks(stocksData);
       setOrders(ordersData);
+      setMyDocuments(docsData || []);
     } catch (e) {
       console.error('Erreur de chargement:', e);
     } finally {
@@ -664,6 +667,38 @@ function DashboardContent() {
                     </table>
                   </div>
                 )
+              )}
+            </div>
+
+            {/* Boîte Documents SGI */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg mt-6">
+              <h3 className="font-extrabold text-white text-md flex items-center gap-2 mb-4">
+                <Globe className="h-4 w-4 text-orange-500" />
+                <span>Documents SGI Officiels</span>
+              </h3>
+              
+              {myDocuments.length === 0 ? (
+                <div className="text-center py-6 border border-dashed border-slate-800 rounded-xl bg-slate-950/20">
+                  <p className="text-xs text-slate-500">Aucun document transmis par votre conseiller SGI.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {myDocuments.map((doc, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 bg-slate-950 border border-slate-850 rounded-xl hover:border-orange-500/30 transition-all">
+                      <div>
+                        <div className="font-bold text-xs text-white">{doc.title}</div>
+                        <div className="text-[9px] text-slate-500 font-mono mt-1">Transmis le {new Date(doc.createdAt).toLocaleDateString()}</div>
+                      </div>
+                      <a 
+                        href={doc.fileData} 
+                        download={doc.fileName}
+                        className="bg-orange-500 hover:bg-orange-600 text-slate-950 font-black px-3 py-1.5 rounded-lg text-[10px] transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        Télécharger
+                      </a>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

@@ -31,6 +31,17 @@ model User {
   Order              Order[]
   WaveTransaction    WaveTransaction[]
   SecuritiesWallet   SecuritiesWallet[]
+  SgiDocument        SgiDocument[]
+}
+
+model SgiDocument {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  fileName  String
+  fileData  String   // PDF content in Base64
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
