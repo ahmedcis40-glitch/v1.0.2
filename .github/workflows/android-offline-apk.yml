@@ -1,0 +1,250 @@
+name: Build Android Offline Demo APK
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Offline Demo APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'mobile-app/package-lock.json'
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Dependencies
+        run: |
+          cd mobile-app
+          npm ci
+
+      - name: Inject Offline Mock API & Rename App for Demo
+        run: |
+          cat << 'EOF' > mobile-app/src/lib/api.ts
+          // Offline Mock API for Client Demos (Runs completely serverless and networkless)
+          import { storage } from './storage';
+
+          let localCash = { balanceTotal: 3450000, balanceFrozen: 850000 };
+          let localSecurities = [
+            { codeValeur: 'SNTS', quantity: 120, averageBuyPrice: 19500 },
+            { codeValeur: 'BOC', quantity: 45, averageBuyPrice: 24200 },
+            { codeValeur: 'SGBC', quantity: 15, averageBuyPrice: 8500 }
+          ];
+          let localTransactions = [
+            { idInternal: 'TX-WAVE-9831', amount: 1500000, type: 'DEPOT', status: 'SUCCES', createdAt: new Date(Date.now() - 3600000 * 24).toISOString() },
+            { idInternal: 'TX-WAVE-1092', amount: 250000, type: 'RETRAIT', status: 'SUCCES', createdAt: new Date(Date.now() - 3600000 * 48).toISOString() }
+          ];
+          let localOrders = [
+            { id: 'ORD-9912', codeValeur: 'SNTS', quantityRequested: 10, priceRequested: 19500, type: 'ACHAT', status: 'EXECUTE', createdAt: new Date().toISOString() }
+          ];
+
+          let localStocks = [
+            { symbol: 'SNTS', name: 'Sonatel Sénégal', lastPrice: 19800, changePercent: '1.24' },
+            { symbol: 'BOC', name: 'BOA Côte d\'Ivoire', lastPrice: 24500, changePercent: '-0.85' },
+            { symbol: 'SGBC', name: 'Société Générale CI', lastPrice: 8600, changePercent: '2.10' },
+            { symbol: 'ETIT', name: 'Ecobank Transnational', lastPrice: 22, changePercent: '0.00' },
+            { symbol: 'ONTB', name: 'ONATEL Burkina', lastPrice: 3100, changePercent: '-1.45' },
+            { symbol: 'SDCC', name: 'SODECI Côte d\'Ivoire', lastPrice: 5400, changePercent: '0.50' }
+          ];
+
+          const mockUser = {
+            id: 'demo-user-id',
+            email: 'ahdahmed45591@gmail.com',
+            firstName: 'Ahmed',
+            lastName: 'D.',
+            phone: '0707070707',
+            whatsappPhone: '0707070707',
+            role: 'CLIENT',
+            kycStatus: 'APPROUVE',
+            sgiPartenaire: 'Société Générale Capital Securities',
+            investorProfile: 'MODERE',
+            investorObjective: 'EPARGNE',
+            investorHorizon: 'MOYEN_TERME'
+          };
+
+          const dummyPdfBase64 = "data:application/pdf;base64,JVBERi0xLjQKJdOl5eYrNDAgMCBvYmoKPDwKL0xlbmd0aCAxNSAgICAgICAgICAgICAgICAgICAgIAo+PgpzdHJlYW0KQlQgL0YxIDEyIFRmIDUwIDUwIFRkIChCQU9VIEZJTkFOQ0UgREVNTykgVGogRVQKZW5kc3RyZWFtCmVuZG9iago1MCAwIG9iago8PAovVHlwZSAvUGFnZQovUGFyZW50IDIgMCBSCi9NZWRpYUJveCBbMCAwIDU5NSA4NDJdCi9SZXNvdXJjZXMgPDwKL0ZvbnQgPDwKL0YxIDMwIDAgUgo+Pgo+PgovQ29udGVudHMgNDAgMCBSCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9UeXBlIC9QYWdlcwovS2lkcyBbNTAgMCBSXQovQ291bnQgMQo+PgplbmRvYmoKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjMwIDAgb2JqCjw8Ci9UeXBlIC9Gb250Ci9TdWJ0eXBlIC9UeXBlMQovQmFzZUZvbnQgL0hlbHZldGljYQo+PgplbmRvYmoKeHJlZgowIDUKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMzI1IDAwMDAwIG4gCjAwMDAwMDAyNzAgMDAwMDAgbIAPMDAwMDAwMDM3NSAwMDAwMCBuIAowMDAwMDAwMDE1IDAwMDAwIG4gCjAwMDAwMDAxNTAgMDAwMDAgbgogdHJhaWxlcgo8PAovU2l6ZSA1Ci9Sb290IDEgMCBSCj4+CnN0YXJ0eHJlZgo0NTAKJSVFT0Y=";
+
+          export const api = {
+            auth: {
+              login: async (data: any) => {
+                return { accessToken: 'demo-token-1234', user: mockUser };
+              },
+              register: async (data: any) => {
+                return { success: true };
+              },
+              me: async (token: string) => {
+                return mockUser;
+              }
+            },
+            wallets: {
+              getCash: async (token: string) => {
+                return localCash;
+              },
+              getSecurities: async (token: string) => {
+                return localSecurities;
+              },
+              getTransactions: async (token: string) => {
+                return localTransactions;
+              },
+              getDocuments: async (token: string) => {
+                return [
+                  { title: 'Convention de Compte SGI', fileName: 'convention_compte_sgi.pdf', fileData: dummyPdfBase64, createdAt: new Date(Date.now() - 3600000*24*3).toISOString() },
+                  { title: 'Relevé de Portefeuille Trimestriel', fileName: 'releve_portefeuille.pdf', fileData: dummyPdfBase64, createdAt: new Date(Date.now() - 3600000*24).toISOString() }
+                ];
+              }
+            },
+            wave: {
+              initiateDeposit: async (data: any, token: string) => {
+                localCash.balanceTotal += data.amount;
+                localTransactions.unshift({
+                  idInternal: 'TX-DEP-' + Math.floor(Math.random() * 10000),
+                  amount: data.amount,
+                  type: 'DEPOT',
+                  status: 'SUCCES',
+                  createdAt: new Date().toISOString()
+                });
+                return { success: true };
+              },
+              initiateWithdraw: async (data: any, token: string) => {
+                if (localCash.balanceTotal - localCash.balanceFrozen < data.amount) {
+                  throw new Error("Solde disponible insuffisant pour ce retrait.");
+                }
+                localCash.balanceTotal -= data.amount;
+                localTransactions.unshift({
+                  idInternal: 'TX-WD-' + Math.floor(Math.random() * 10000),
+                  amount: data.amount,
+                  type: 'RETRAIT',
+                  status: 'SUCCES',
+                  createdAt: new Date().toISOString()
+                });
+                return { success: true };
+              }
+            },
+            market: {
+              getStocks: async () => {
+                localStocks = localStocks.map(s => {
+                  const change = (Math.random() * 2 - 1) * 0.5;
+                  const lastPrice = Math.max(10, Math.round(s.lastPrice * (1 + change / 100)));
+                  return {
+                    ...s,
+                    lastPrice,
+                    changePercent: (parseFloat(s.changePercent) + change).toFixed(2)
+                  };
+                });
+                return localStocks;
+              }
+            },
+            orders: {
+              create: async (data: any, token: string) => {
+                const isAchat = data.type === 'ACHAT';
+                const totalCost = data.quantity * data.price * 1.015;
+
+                if (isAchat) {
+                  if (localCash.balanceTotal - localCash.balanceFrozen < totalCost) {
+                    throw new Error("Solde cash insuffisant pour cet achat.");
+                  }
+                  localCash.balanceTotal -= totalCost;
+                  const existing = localSecurities.find(s => s.codeValeur === data.symbol);
+                  if (existing) {
+                    existing.quantity += data.quantity;
+                  } else {
+                    localSecurities.push({ codeValeur: data.symbol, quantity: data.quantity, averageBuyPrice: data.price });
+                  }
+                } else {
+                  const existing = localSecurities.find(s => s.codeValeur === data.symbol);
+                  if (!existing || existing.quantity < data.quantity) {
+                    throw new Error("Nombre d'actions insuffisant en portefeuille.");
+                  }
+                  existing.quantity -= data.quantity;
+                  if (existing.quantity === 0) {
+                    localSecurities = localSecurities.filter(s => s.codeValeur !== data.symbol);
+                  }
+                  localCash.balanceTotal += data.quantity * data.price * 0.985;
+                }
+
+                localOrders.unshift({
+                  id: 'ORD-' + Math.floor(Math.random() * 10000),
+                  codeValeur: data.symbol,
+                  quantityRequested: data.quantity,
+                  priceRequested: data.price,
+                  type: data.type,
+                  status: 'EXECUTE',
+                  createdAt: new Date().toISOString()
+                });
+                return { success: true };
+              },
+              getMy: async (token: string) => {
+                return localOrders;
+              }
+            }
+          };
+          EOF
+
+          # Rename the App inside app.json for clear Demo separation
+          sed -i 's/"name": "BAOU"/"name": "BAOU (Démo Offline)"/g' mobile-app/app.json
+          
+          echo "✅ Offline Demo Mock API and App Naming applied successfully!"
+
+      - name: Prebuild Expo App (Generate Android Project)
+        run: |
+          cd mobile-app
+          npx expo prebuild --platform android --no-install
+
+      - name: Patch Android - Allow HTTP cleartext traffic
+        run: |
+          mkdir -p mobile-app/android/app/src/main/res/xml
+          cat << 'EOF' > mobile-app/android/app/src/main/res/xml/network_security_config.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true">
+                  <trust-anchors>
+                      <certificates src="system" />
+                  </trust-anchors>
+              </base-config>
+          </network-security-config>
+          EOF
+
+          sed -i 's/<application/<application android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml\/network_security_config"/g' mobile-app/android/app/src/main/AndroidManifest.xml
+          
+          echo "✅ Patch HTTP Cleartext appliqué avec succès sur le projet Android Expo"
+
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('mobile-app/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build Android APK (Gradle)
+        run: |
+          cd mobile-app/android
+          chmod +x gradlew
+          ./gradlew assembleRelease -Pandroid.enableMinifyInReleaseBuilds=true -Pandroid.enableShrinkResourcesInReleaseBuilds=true --no-daemon
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-offline-demo-apk
+          path: mobile-app/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
