@@ -161,20 +161,35 @@ export default function PaymentScreen({
           </View>
 
           {/* Numéro de téléphone */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>NUMÉRO MOBILE MONEY</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.prefix}>+225</Text>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="0701020304"
-                placeholderTextColor="#475569"
-                keyboardType="phone-pad"
-              />
+          {isDeposit ? (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>NUMÉRO WAVE DE DÉPÔT</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.prefix}>+225</Text>
+                <TextInput
+                  style={styles.input}
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="0701020304"
+                  placeholderTextColor="#475569"
+                  keyboardType="phone-pad"
+                />
+              </View>
             </View>
-          </View>
+          ) : (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>NUMÉRO WAVE DE DESTINATION (RETRAIT)</Text>
+              <View style={[styles.inputContainer, { backgroundColor: '#0f172a', borderColor: '#1e293b' }]}>
+                <Text style={styles.prefix}>+225</Text>
+                <Text style={[styles.input, { color: '#94a3b8', paddingTop: Platform.OS === 'ios' ? 0 : 12 }]}>
+                  {user?.phone || phone}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 10, color: '#64748b', marginTop: 4, fontStyle: 'italic' }}>
+                Les fonds seront reversés uniquement sur le numéro Wave associé à votre compte.
+              </Text>
+            </View>
+          )}
 
           <TouchableOpacity
             style={styles.submitButton}

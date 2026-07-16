@@ -902,11 +902,9 @@ export default function App() {
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="block text-[8px] font-semibold text-gray-400 uppercase mb-1">Opérateur</label>
-                          <select value={depositOperator} onChange={e => setDepositOperator(e.target.value)} className="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-xs text-gray-200">
-                            <option value="Wave">Wave CI</option>
-                            <option value="Orange">Orange Money</option>
-                            <option value="MTN">MTN Money</option>
-                          </select>
+                          <div className="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-xs text-gray-400 font-bold">
+                            Wave CI
+                          </div>
                         </div>
                         <div>
                           <label className="block text-[8px] font-semibold text-gray-400 uppercase mb-1">Montant (FCFA)</label>
