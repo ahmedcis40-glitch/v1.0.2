@@ -338,7 +338,7 @@ export default function DashboardScreen({
               ) : stocks.length === 0 ? (
                 <Text style={{ color: '#475569', fontSize: 10, textAlign: 'center', marginVertical: 10 }}>Aucune action disponible</Text>
               ) : (
-                stocks.slice(0, 10).map((stock) => {
+                stocks.map((stock) => {
                   const changeVal = parseFloat(stock.changePercent || '0');
                   const isUp = changeVal > 0;
                   const isDown = changeVal < 0;
