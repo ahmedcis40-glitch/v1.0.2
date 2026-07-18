@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StatusBar, SafeAreaView, Linking } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StatusBar, SafeAreaView, Linking, Alert } from 'react-native';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
-import { Lock, Mail, Settings, ShieldCheck } from 'lucide-react-native';
+import { Lock, Mail, Settings, ShieldCheck, FileText, Upload, Image } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function LoginScreen({ 
   onLoginSuccess, 
@@ -28,6 +29,40 @@ export default function LoginScreen({
   const [investorProfile, setInvestorProfile] = useState('MODERE');
   const [investorObjective, setInvestorObjective] = useState('EPARGNE');
   const [investorHorizon, setInvestorHorizon] = useState('MOYEN_TERME');
+
+  // Justificatifs KYC réels
+  const [cniRecto, setCniRecto] = useState<string | null>(null);
+  const [cniVerso, setCniVerso] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [facture, setFacture] = useState<string | null>(null);
+
+  const pickImage = async (type: 'recto' | 'verso' | 'photo' | 'facture') => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert("Permission requise", "Nous avons besoin de la permission d'accès aux photos pour charger vos justificatifs.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.4, // Compresser pour alléger le base64 envoyé par l'API
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        const base64Data = `data:image/jpeg;base64,${asset.base64}`;
+        if (type === 'recto') setCniRecto(base64Data);
+        if (type === 'verso') setCniVerso(base64Data);
+        if (type === 'photo') setPhoto(base64Data);
+        if (type === 'facture') setFacture(base64Data);
+      }
+    } catch (e) {
+      Alert.alert("Erreur", "Impossible de sélectionner l'image.");
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -61,19 +96,23 @@ export default function LoginScreen({
       return;
     }
 
+    if (!cniRecto || !cniVerso || !photo || !facture) {
+      setError("Veuillez charger tous les justificatifs KYC requis (CNI Recto/Verso, Selfie et Facture).");
+      return;
+    }
+
     setLoading(true);
     setError('');
 
-    // Génération automatique du numéro de téléphone et des KYC base64 de test
+    // Génération automatique du numéro de téléphone
     const randomSuffix = Math.floor(10000000 + Math.random() * 90000000).toString();
     const phone = `+22507${randomSuffix}`;
-    const dummyBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
     const kycDocumentsJson = JSON.stringify({
-      cniRecto: dummyBase64,
-      cniVerso: dummyBase64,
-      photo: dummyBase64,
-      facture: dummyBase64,
+      cniRecto,
+      cniVerso,
+      photo,
+      facture,
     });
 
     try {
@@ -93,10 +132,22 @@ export default function LoginScreen({
         investorHorizon,
       });
 
-      Alert.alert("Inscription Réussie !", "Votre compte BAOU a été créé et vos pièces justificatives de test ont été transmises. Vous pouvez maintenant vous connecter.");
+      Alert.alert("Inscription Réussie !", "Votre compte BAOU a été créé et vos pièces justificatives ont été transmises pour validation. Vous pouvez maintenant vous connecter.");
       setEmail(regEmail);
       setPassword(regPassword);
       setIsRegisterMode(false);
+
+      // Reset
+      setFirstName('');
+      setLastName('');
+      setRegEmail('');
+      setRegPassword('');
+      setConfirmPassword('');
+      setWhatsappPhone('');
+      setCniRecto(null);
+      setCniVerso(null);
+      setPhoto(null);
+      setFacture(null);
     } catch (err: any) {
       setError(err.message || "Erreur lors de l'inscription.");
     } finally {
@@ -407,8 +458,79 @@ export default function LoginScreen({
                 </View>
               </View>
 
+              {/* Section Pièces Justificatives KYC */}
+              <View style={[styles.inputGroup, { marginTop: 15 }]}>
+                <Text style={styles.label}>JUSTIFICATIFS RÉGLEMENTAIRES (KYC)</Text>
+                
+                <View style={{ flexDirection: 'column', gap: 10, marginTop: 8 }}>
+                  {/* CNI Recto */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#1e293b', padding: 12, borderRadius: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <FileText size={18} color="#ff8200" />
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: 'bold' }}>1. CNI Recto</Text>
+                        <Text style={{ color: cniRecto ? '#10b981' : '#64748b', fontSize: 9 }}>
+                          {cniRecto ? '✓ Document chargé' : 'Non fourni'}
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity onPress={() => pickImage('recto')} style={{ backgroundColor: cniRecto ? '#10b981' : '#ff8200', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 }}>
+                      <Text style={{ color: '#020617', fontSize: 9, fontWeight: 'bold' }}>{cniRecto ? 'Modifier' : 'Importer'}</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* CNI Verso */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#1e293b', padding: 12, borderRadius: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <FileText size={18} color="#ff8200" />
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: 'bold' }}>2. CNI Verso</Text>
+                        <Text style={{ color: cniVerso ? '#10b981' : '#64748b', fontSize: 9 }}>
+                          {cniVerso ? '✓ Document chargé' : 'Non fourni'}
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity onPress={() => pickImage('verso')} style={{ backgroundColor: cniVerso ? '#10b981' : '#ff8200', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 }}>
+                      <Text style={{ color: '#020617', fontSize: 9, fontWeight: 'bold' }}>{cniVerso ? 'Modifier' : 'Importer'}</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Selfie */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#1e293b', padding: 12, borderRadius: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <FileText size={18} color="#ff8200" />
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: 'bold' }}>3. Photo d'Identité / Selfie</Text>
+                        <Text style={{ color: photo ? '#10b981' : '#64748b', fontSize: 9 }}>
+                          {photo ? '✓ Selfie chargé' : 'Non fourni'}
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity onPress={() => pickImage('photo')} style={{ backgroundColor: photo ? '#10b981' : '#ff8200', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 }}>
+                      <Text style={{ color: '#020617', fontSize: 9, fontWeight: 'bold' }}>{photo ? 'Modifier' : 'Importer'}</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Facture justificatif */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#1e293b', padding: 12, borderRadius: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <FileText size={18} color="#ff8200" />
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: 'bold' }}>4. Justificatif de domicile</Text>
+                        <Text style={{ color: facture ? '#10b981' : '#64748b', fontSize: 9 }}>
+                          {facture ? '✓ Document chargé' : 'Non fourni'}
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity onPress={() => pickImage('facture')} style={{ backgroundColor: facture ? '#10b981' : '#ff8200', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 }}>
+                      <Text style={{ color: '#020617', fontSize: 9, fontWeight: 'bold' }}>{facture ? 'Modifier' : 'Importer'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
               <Text style={{ fontSize: 9, color: '#64748b', textAlign: 'center', marginTop: 10, fontStyle: 'italic' }}>
-                Note : Par commodité mobile, vos documents réglementaires de conformité (CNI et justificatifs) sont automatiquement configurés en mode test pour l'inscription.
+                Note : Vos documents réglementaires d'identité (CNI, selfie et justificatif) sont requis par l'AMF-UMOA pour autoriser vos investissements en actions.
               </Text>
 
               <TouchableOpacity 
