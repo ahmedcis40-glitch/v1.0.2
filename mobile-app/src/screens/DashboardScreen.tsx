@@ -110,7 +110,7 @@ export default function DashboardScreen({
       return;
     }
     setSelectedStock(stock);
-    setOrderPrice(stock.lastPrice?.toString() || '0');
+    setOrderPrice(stock.price?.toString() || '0');
     setQuantity('1');
     setOrderType('ACHAT');
   };
@@ -131,13 +131,13 @@ export default function DashboardScreen({
     setSubmittingOrder(true);
     try {
       await api.orders.create({
-        symbol: selectedStock.symbol,
+        symbol: selectedStock.code,
         type: orderType,
         quantity: qty,
         price: price,
       }, token);
       
-      Alert.alert("Succès", `Votre ordre d'${orderType === 'ACHAT' ? 'achat' : 'vente'} pour ${qty} actions ${selectedStock.symbol} a été soumis avec succès à la SGI !`);
+      Alert.alert("Succès", `Votre ordre d'${orderType === 'ACHAT' ? 'achat' : 'vente'} pour ${qty} actions ${selectedStock.code} a été soumis avec succès à la SGI !`);
       setSelectedStock(null);
     } catch (err: any) {
       Alert.alert("Erreur", err.message || "Impossible de soumettre l'ordre.");
@@ -319,11 +319,6 @@ export default function DashboardScreen({
                 <ArrowUpRight size={18} color="#020617" style={{ marginRight: 6 }} />
                 <Text style={styles.btnActionText}>Effectuer un Dépôt</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.btnAction, styles.btnActionOutline]} onPress={onInitiateWithdraw}>
-                <ArrowDownLeft size={18} color="#ff8200" style={{ marginRight: 6 }} />
-                <Text style={styles.btnActionTextOutline}>Retrait vers portefeuille</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Espace Boursier du Marché */}
@@ -339,24 +334,24 @@ export default function DashboardScreen({
                 <Text style={{ color: '#475569', fontSize: 10, textAlign: 'center', marginVertical: 10 }}>Aucune action disponible</Text>
               ) : (
                 stocks.map((stock) => {
-                  const changeVal = parseFloat(stock.changePercent || '0');
+                  const changeVal = stock.change || 0;
                   const isUp = changeVal > 0;
                   const isDown = changeVal < 0;
 
                   return (
-                    <TouchableOpacity key={stock.symbol} style={styles.stockItem} onPress={() => handleSelectStock(stock)}>
+                    <TouchableOpacity key={stock.code} style={styles.stockItem} onPress={() => handleSelectStock(stock)}>
                       <View style={{ flex: 1, marginRight: 10 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={styles.stockCode}>{stock.symbol}</Text>
+                          <Text style={styles.stockCode}>{stock.code}</Text>
                         </View>
                         <Text style={styles.stockName} numberOfLines={1}>{stock.name}</Text>
                       </View>
                       <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={styles.stockPrice}>{stock.lastPrice?.toLocaleString()} F</Text>
+                        <Text style={styles.stockPrice}>{stock.price?.toLocaleString()} F</Text>
                         <Text style={
                           isUp ? styles.stockChangeUp : isDown ? styles.stockChangeDown : styles.stockChangeFlat
                         }>
-                          {isUp ? `+${stock.changePercent}%` : `${stock.changePercent}%`}
+                          {isUp ? `+${changeVal.toFixed(2)}%` : `${changeVal.toFixed(2)}%`}
                         </Text>
                       </View>
                     </TouchableOpacity>
