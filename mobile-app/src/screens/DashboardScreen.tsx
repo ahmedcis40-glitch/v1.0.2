@@ -322,7 +322,7 @@ export default function DashboardScreen({
 
               <TouchableOpacity style={[styles.btnAction, styles.btnActionOutline]} onPress={onInitiateWithdraw}>
                 <ArrowDownLeft size={18} color="#ff8200" style={{ marginRight: 6 }} />
-                <Text style={styles.btnActionTextOutline}>Faire un Retrait</Text>
+                <Text style={styles.btnActionTextOutline}>Retrait vers portefeuille</Text>
               </TouchableOpacity>
             </View>
 

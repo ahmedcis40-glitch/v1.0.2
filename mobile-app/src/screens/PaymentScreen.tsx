@@ -126,7 +126,7 @@ export default function PaymentScreen({
           <ArrowLeft size={20} color="#94a3b8" />
         </TouchableOpacity>
         <Text style={styles.title}>
-          {isDeposit ? "Dépôt Mobile Money" : "Retrait Mobile Money"}
+          {isDeposit ? "Dépôt Mobile Money" : "Retrait vers portefeuille"}
         </Text>
       </View>
 

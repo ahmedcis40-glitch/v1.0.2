@@ -42,15 +42,100 @@ export class AdminService {
       select: {
         id: true,
         email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        sgiPartenaire: true,
+        investorProfile: true,
+        investorHorizon: true,
         kycStatus: true,
       },
     });
+
+    // Si le dossier est approuvé, générer et envoyer automatiquement les PDF requis par le client
+    if (kycStatus === KYCStatus.APPROUVE) {
+      const today = new Date().toLocaleDateString('fr-FR');
+      
+      // PDF Convention de Compte SGI
+      const conventionPdfContent = `
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 800 >>
+stream
+BT
+/F1 16 Tf
+50 780 Td
+(CONVENTION DE COMPTE-TITRES SGI & BAOU FINANCE) Tj
+/F1 10 Tf
+0 -30 Td
+(Dossier approuve le ${today} conformement aux directives AMF-UMOA.) Tj
+0 -25 Td
+(PARTIES CONTRACTANTES :) Tj
+0 -15 Td
+(Client : ${updatedUser.firstName} ${updatedUser.lastName}) Tj
+0 -15 Td
+(Email : ${updatedUser.email} | Telephone : ${updatedUser.phone}) Tj
+0 -15 Td
+(SGI Partenaire : ${updatedUser.sgiPartenaire || 'Societe Generale Capital Securities'}) Tj
+0 -30 Td
+(STATUT CONFORMITE : APPROUVE ET VALIDE) Tj
+0 -15 Td
+(Profil d'investisseur : ${updatedUser.investorProfile || 'MODERE'}) Tj
+0 -15 Td
+(Horizon d'investissement : ${updatedUser.investorHorizon || 'MOYEN_TERME'}) Tj
+0 -30 Td
+(Cette convention certifie l'ouverture officielle de votre compte-titres) Tj
+0 -15 Td
+(aupres de la SGI partenaire et vous autorise desormais a negocier) Tj
+0 -15 Td
+(des actions de la BRVM sur l'application mobile et le portail BAOU.) Tj
+0 -45 Td
+(Document signe electroniquement par BAOU Finance le ${today}) Tj
+ET
+endstream
+endobj
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000257 00000 n 
+trailer
+<< /Size 5 /Root 1 0 R >>
+startxref
+443
+%%EOF
+      `.trim();
+
+      const conventionBase64 = Buffer.from(conventionPdfContent).toString('base64');
+      
+      // Insérer dans la table SgiDocument pour que le client le reçoive dans son application mobile
+      await this.prisma.sgiDocument.create({
+        data: {
+          userId,
+          title: "Convention de Compte SGI (Approuvé)",
+          fileName: "convention_compte_sgi.pdf",
+          fileData: `data:application/pdf;base64,${conventionBase64}`,
+          createdAt: new Date(),
+        }
+      });
+    }
 
     await this.prisma.auditLog.create({
       data: {
         userId,
         action: `KYC_${kycStatus}`,
-        details: `Statut KYC mis à jour à ${kycStatus} par l'administrateur`,
+        details: `Statut KYC mis à jour à ${kycStatus} par l'administrateur et génération automatique de la convention de compte PDF`,
         ipAddress: '127.0.0.1',
       },
     });
