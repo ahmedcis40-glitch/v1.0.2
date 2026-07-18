@@ -96,11 +96,12 @@ export class MarketService implements OnModuleInit {
   private stocks: StockTicker[] = [...FALLBACK_STOCKS];
 
   async onModuleInit() {
-    this.logger.log('[BAOU Market] Scraping Sika Finance at startup...');
+    this.logger.log("[BAOU Market] Démarrage du serveur : Connexion automatique à la BRVM pour récupérer les cours en direct...");
     try {
       await this.scrapeSikaFinance();
+      this.logger.log(`[BAOU Market] Données BRVM prêtes ! Les cours en direct sont transmis automatiquement au site web et à l'application mobile (APK) toutes les 5 secondes.`);
     } catch (error: any) {
-      this.logger.error('[BAOU Market] Startup scrape failed. Using fallback data: ' + error.message);
+      this.logger.error("[BAOU Market] Impossible de contacter la BRVM en direct. Utilisation des cours de secours : " + error.message);
     }
   }
 
