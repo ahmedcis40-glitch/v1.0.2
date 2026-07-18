@@ -45,7 +45,7 @@ async function main() {
       firstName: 'Directeur',
       lastName: 'SGI',
       phone: '+2250707070701',
-      role: Role.ADMIN_KYC,
+      role: Role.ADMIN,
       kycStatus: KYCStatus.APPROUVE,
       consentSMS: true,
     },

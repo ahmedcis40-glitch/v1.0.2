@@ -39,7 +39,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (httpStatus >= 500) {
       this.logger.error(`[500 Internal Error] ${message}`, stack);
     } else {
-      this.logger.warn(`[${httpStatus} Warning] ${message}`);
+      this.logger.warn(`[${httpStatus} Warning] Path: ${httpAdapter.getRequestUrl(ctx.getRequest())} - ${message}`);
     }
 
     const responseBody = {
