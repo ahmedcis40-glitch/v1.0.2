@@ -351,22 +351,14 @@ function DashboardContent() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mt-6">
+            <div className="mt-6">
               <button 
                 onClick={() => setShowDepositModal(true)}
                 id="depositBtn"
-                className="flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-bold py-2.5 px-3 rounded-lg text-xs transition-colors cursor-pointer"
+                className="w-full flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-bold py-2.5 px-3 rounded-lg text-xs transition-colors cursor-pointer"
               >
                 <ArrowUpRight className="h-4 w-4" />
-                Dépôt
-              </button>
-              <button 
-                onClick={() => setShowWithdrawModal(true)}
-                id="withdrawBtn"
-                className="flex items-center justify-center gap-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-white font-bold py-2.5 px-3 rounded-lg text-xs transition-colors cursor-pointer"
-              >
-                <ArrowDownLeft className="h-4 w-4" />
-                Retrait
+                Effectuer un Dépôt
               </button>
             </div>
           </div>
